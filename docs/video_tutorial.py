@@ -23,7 +23,7 @@ from memory import KMeansMemory
 print("load model")
 warnings.filterwarnings("ignore")
 # Load the OneVision model
-pretrained = "/anvme/workspace/b232dd16-LLaVA-OV/testcache/llava-onevision-google_siglip-so400m-patch14-384-Qwen_Qwen2-7B-Instruct-freezeall/"   # Use this for 7B model
+pretrained = "/anvme/workspace/b232dd16-LLaVA-OV/checkpoints/llava-onevision-google_siglip-so400m-patch14-384-Qwen_Qwen2-7B-Instruct-memory_adapter_2nd"   # Use this for 7B model
 # pretrained = "/anvme/workspace/b232dd16-LLaVA-OV/llava-onevision-qwen2-7b-ov"   # Use this for 7B model
 model_name = "llava_qwen"
 device = "cuda"
@@ -118,9 +118,9 @@ def dynamic_load_video(video_path):
 
 print("load video")
 # Load and process video
-video_path = "/home/hpc/b232dd/b232dd16/LLaVA-OV/docs/needle_32.mp4"
+video_path = "/home/hpc/b232dd/b232dd16/LLaVA-OV/docs/count_126.mp4"
 # video_frames = load_video(video_path, 32)
-video_frames = load_video(video_path, 150)
+video_frames = load_video(video_path, 128)
 print(video_frames.shape) # (16, 1024, 576, 3)
 image_tensors = []
 frames = image_processor.preprocess(video_frames, return_tensors="pt")["pixel_values"].half().cuda()
@@ -157,7 +157,7 @@ image_tensors.append(frames)
 # Prepare conversation input
 conv_template = "qwen_1_5"
 
-question = f"{DEFAULT_IMAGE_TOKEN}\nDescribe what's happening in this video."
+question = f"{DEFAULT_IMAGE_TOKEN}\nQuestion: Throughout this video, what is the total count of occurrences for the scene featuring the 'playing trombone' action\nOptions:\n(A) 2\n(B) 1\n(C) 5\n(D) 4"
 
 conv = copy.deepcopy(conv_templates[conv_template])
 conv.append_message(conv.roles[0], question)
