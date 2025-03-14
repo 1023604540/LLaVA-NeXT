@@ -27,8 +27,8 @@ echo "BASE_RUN_NAME: ${BASE_RUN_NAME}"
 
 # Stage 2
 PROMPT_VERSION="qwen_1_5"
-RUN_NAME="llava-onevision-${VISION_MODEL_VERSION_CLEAN}-${LLM_VERSION_CLEAN}-testzero3"
-PREV_STAGE_CHECKPOINT="/anvme/workspace/b232dd16-LLaVA-OV/llava-onevision-qwen2-7b-ov" # replace it with your last checkpoint training from single image collection
+RUN_NAME="llava-onevision-${VISION_MODEL_VERSION_CLEAN}-${LLM_VERSION_CLEAN}-memory_adapter_no_compression——2nd"
+PREV_STAGE_CHECKPOINT="/anvme/workspace/b232dd16-LLaVA-OV/checkpoints/llava-onevision-google_siglip-so400m-patch14-384-Qwen_Qwen2-7B-Instruct-memory_adapter_no_compression/checkpoint-15000" # replace it with your last checkpoint training from single image collection
 echo "PREV_STAGE_CHECKPOINT: ${PREV_STAGE_CHECKPOINT}"
 echo "MID_RUN_NAME: ${RUN_NAME}"
 
@@ -36,19 +36,19 @@ NUM_GPUS=8
 NNODES=$SLURM_NNODES
 RANK=$SLURM_PROCID
 ADDR=$(scontrol show hostname $SLURM_NODELIST | head -n1)  # Master node
-PORT=12347
+PORT=12346
 
 
 
 ACCELERATE_CPU_AFFINITY=0 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NNODES}" --node_rank="${RANK}" --master_addr="${ADDR}" --master_port="${PORT}" \
     llava/train/train_mem.py \
-    --deepspeed scripts/zero3.json \
+    --deepspeed scripts/zero2.json \
     --model_name_or_path $PREV_STAGE_CHECKPOINT \
     --version $PROMPT_VERSION \
     --data_path /home/hpc/b232dd/b232dd16/LLaVA-OV/scripts/train/memory_train.yaml \
     --image_folder /anvme/workspace/b232dd21-zyr/llava-data \
     --video_folder /anvme/workspace/b232dd16-LLaVA-OV/llava-video \
-    --mm_tunable_parts="mm_mlp_adapter, attention_model" \
+    --mm_tunable_parts="attention_model,mm_mlp_adapter" \
     --mm_vision_tower_lr=2e-6 \
     --vision_tower ${VISION_MODEL_VERSION} \
     --mm_projector_type mlp2x_gelu \
@@ -61,7 +61,7 @@ ACCELERATE_CPU_AFFINITY=0 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --mm_patch_merge_type spatial_unpad \
     --bf16 True \
     --run_name $RUN_NAME \
-    --output_dir /anvme/workspace/b232dd16-LLaVA-OV/testcache2/$RUN_NAME \
+    --output_dir /anvme/workspace/b232dd16-LLaVA-OV/checkpoints/$RUN_NAME \
     --num_train_epochs 1 \
     --per_device_train_batch_size 1 \
     --per_device_eval_batch_size 4 \
@@ -84,7 +84,8 @@ ACCELERATE_CPU_AFFINITY=0 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --torch_compile True \
     --torch_compile_backend "inductor" \
     --dataloader_drop_last True \
-    --frames_upbound 0  # 32 initially
+    --force_sample True \
+    --frames_upbound 128   # 32 initially
 exit 0;
 
 # You can delete the sdpa attn_implementation if you want to use flash attn
