@@ -388,13 +388,12 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 # print("Before attention_model forward pass")
                 image_segments = [encoded_features[boundaries[i]:boundaries[i+1]] for i in range(len(boundaries) - 1)]
                 memory_boundary = [0]
-                current_segment = 0
                 for image_segment in image_segments:
                     #print(f"Image segment shape : {image_segment.shape}")
                     #print(f"Encoded segment shape : {encoded_segment.shape}")
                     segment_memory += (self.compress_temporal_features([image_segment], video_idx_in_batch, all_video=True))
-                    current_segment += len(segment_memory)
-                    memory_boundary.append(current_segment)
+                    memory_boundary.append(len(segment_memory))
+                    print(len(segment_memory))
                 boundary_list.append(memory_boundary)
 
                 #print(f"Segment memory : {[x.shape for x in segment_memory if x is not None]}")
