@@ -366,6 +366,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
             # Initialize lists to collect non-video images and their original indices.
             non_video_images = []
             non_video_positions = []
+            boundary_list = []
 
             for idx, image in enumerate(images_list):
                 # If it is not a video feature, we don't need to process it
@@ -374,6 +375,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     non_video_positions.append(idx)
                     continue
                 boundaries = adjusted_segment(image.mean(dim=1).flatten(1,2))
+
                 #print(f"boundaries:{len(boundaries)}")
                 #print(f"boundaries:{boundaries}")
 
@@ -385,10 +387,16 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 # torch.cuda.synchronize()
                 # print("Before attention_model forward pass")
                 image_segments = [encoded_features[boundaries[i]:boundaries[i+1]] for i in range(len(boundaries) - 1)]
+                memory_boundary = [0]
+                current_segment = 0
                 for image_segment in image_segments:
                     #print(f"Image segment shape : {image_segment.shape}")
                     #print(f"Encoded segment shape : {encoded_segment.shape}")
                     segment_memory += (self.compress_temporal_features([image_segment], video_idx_in_batch, all_video=True))
+                    current_segment += len(segment_memory)
+                    memory_boundary.append(current_segment)
+                boundary_list.append(memory_boundary)
+
                 #print(f"Segment memory : {[x.shape for x in segment_memory if x is not None]}")
                 # torch.cuda.synchronize()
                 # print("After attention_model forward pass")
@@ -580,44 +588,65 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 t1 = 0.8
                 t2 = -100
                 all_depth = 3
-
+                boundaries = boundary_list[index]
+                print(boundaries)
                 for idx, score in scores:
                     print(f"Frame {idx}: score = {score}")
                 # -------------------- 关键帧挑选部分 --------------------
                 # 将 (frame_index, score) 分离为两个列表
                 frame_score_values = [score for frame_idx, score in scores]
-                frame_indices = [frame_idx for frame_idx, score in scores]
+                segment_scores = []
+                for i in range(len(boundaries) - 1):
+                    start = boundaries[i]
+                    end = boundaries[i + 1]
+                    # 计算该 segment 内所有帧的平均相似度作为该 segment 的分数
+                    segment_score = np.mean(frame_score_values[start:end])
+                    segment_scores.append(segment_score)
+                    print(f"Segment {i} (frames {start}-{end - 1}) score: {segment_score}")
 
-                # 如果帧数超过阈值，则进行关键帧挑选，否则全部保留
-                if len(frame_score_values) >= max_num_frames:
-                    # 归一化分数到 [0,1] 区间
-                    score_arr = np.array(frame_score_values)
-                    normalized_scores = (score_arr - np.min(score_arr)) / (np.max(score_arr) - np.min(score_arr))
+                # 选择最相关的 segment（分数最高）
+                selected_segment_index = np.argmax(segment_scores)
+                selected_segment_start = boundaries[selected_segment_index]
+                selected_segment_end = boundaries[selected_segment_index + 1]
+                print(
+                    f"Selected Segment: Index {selected_segment_index} with frame range {selected_segment_start} to {selected_segment_end - 1}")
 
-                    # 构造初始的分数字典，深度为0
-                    initial_score_dict = dict(score=normalized_scores.tolist(), depth=0)
-                    # 同时传入所有帧对应的索引列表
-                    selected_score_dicts, selected_frame_indices = meanstd(len(normalized_scores),
-                                                                           [initial_score_dict],
-                                                                           max_num_frames,
-                                                                           [frame_indices],
-                                                                           t1, t2, all_depth)
+                # 从 image_feature 中提取出该 segment 的所有帧
+                selected_segment_feature = image_feature[selected_segment_start:selected_segment_end]
 
-                    # 根据每个分割段的深度决定挑选的帧数
-                    selected_frames = []
-                    for seg, seg_indices in zip(selected_score_dicts, selected_frame_indices):
-                        f_num = int(max_num_frames / (2 ** seg['depth']))
-                        # 从该段中挑选得分最高的 f_num 个帧
-                        topk_indices = heapq.nlargest(f_num, range(len(seg['score'])), seg['score'].__getitem__)
-                        selected_frames.extend([seg_indices[i] for i in topk_indices])
-                    selected_frames.sort()
-                else:
-                    selected_frames = frame_indices
+                # 直接更新 image_features 列表中的元素
+                image_features[index] = selected_segment_feature
 
-                print("Selected Key Frames:", selected_frames)
-                selected_image_features = image_feature[selected_frames]
-                print(index)
-                image_features[index] = selected_image_features
+                # # 如果帧数超过阈值，则进行关键帧挑选，否则全部保留
+                # if len(frame_score_values) >= max_num_frames:
+                #     # 归一化分数到 [0,1] 区间
+                #     score_arr = np.array(frame_score_values)
+                #     normalized_scores = (score_arr - np.min(score_arr)) / (np.max(score_arr) - np.min(score_arr))
+                #
+                #     # 构造初始的分数字典，深度为0
+                #     initial_score_dict = dict(score=normalized_scores.tolist(), depth=0)
+                #     # 同时传入所有帧对应的索引列表
+                #     selected_score_dicts, selected_frame_indices = meanstd(len(normalized_scores),
+                #                                                            [initial_score_dict],
+                #                                                            max_num_frames,
+                #                                                            [frame_indices],
+                #                                                            t1, t2, all_depth)
+                #
+                #     # 根据每个分割段的深度决定挑选的帧数
+                #     selected_frames = []
+                #     for seg, seg_indices in zip(selected_score_dicts, selected_frame_indices):
+                #         f_num = int(max_num_frames / (2 ** seg['depth']))
+                #         # 从该段中挑选得分最高的 f_num 个帧
+                #         topk_indices = heapq.nlargest(f_num, range(len(seg['score'])), seg['score'].__getitem__)
+                #         selected_frames.extend([seg_indices[i] for i in topk_indices])
+                #     selected_frames.sort()
+                # else:
+                #     selected_frames = frame_indices
+                #
+                # print("Selected Key Frames:", selected_frames)
+                # selected_image_features = image_feature[selected_frames]
+                # print(index)
+                # image_features[index] = selected_image_features
 
             mm_patch_merge_type = getattr(self.config, "mm_patch_merge_type", "flat")
             image_aspect_ratio = getattr(self.config, "image_aspect_ratio", "square")
