@@ -539,56 +539,56 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     return frame_scores
 
                 scores = compute_all_frame_scores(image_feature, query_feature.squeeze(0), reduction='mean')
-                print("Frame Scores:")
-
-                def meanstd(len_scores, dic_scores, n, fns, t1, t2, all_depth):
-                    split_scores = []
-                    split_fn = []
-                    no_split_scores = []
-                    no_split_fn = []
-                    i = 0
-                    for dic_score, fn in zip(dic_scores, fns):
-                        # normalized_data = (score - np.min(score)) / (np.max(score) - np.min(score))
-                        score = dic_score['score']
-                        depth = dic_score['depth']
-                        mean = np.mean(score)
-                        std = np.std(score)
-
-                        top_n = heapq.nlargest(n, range(len(score)), score.__getitem__)
-                        top_score = [score[t] for t in top_n]
-                        # print(f"split {i}: ",len(score))
-                        i += 1
-                        mean_diff = np.mean(top_score) - mean
-                        if mean_diff > t1 and std > t2:
-                            no_split_scores.append(dic_score)
-                            no_split_fn.append(fn)
-                        elif depth < all_depth:
-                            # elif len(score)>(len_scores/n)*2 and len(score) >= 8:
-                            score1 = score[:len(score) // 2]
-                            score2 = score[len(score) // 2:]
-                            fn1 = fn[:len(score) // 2]
-                            fn2 = fn[len(score) // 2:]
-                            split_scores.append(dict(score=score1, depth=depth + 1))
-                            split_scores.append(dict(score=score2, depth=depth + 1))
-                            split_fn.append(fn1)
-                            split_fn.append(fn2)
-                        else:
-                            no_split_scores.append(dic_score)
-                            no_split_fn.append(fn)
-                    if len(split_scores) > 0:
-                        all_split_score, all_split_fn = meanstd(len_scores, split_scores, n, split_fn, t1, t2,
-                                                                all_depth)
-                    else:
-                        all_split_score = []
-                        all_split_fn = []
-                    all_split_score = no_split_scores + all_split_score
-                    all_split_fn = no_split_fn + all_split_fn
-
-                    return all_split_score, all_split_fn
-                max_num_frames = 16
-                t1 = 0.8
-                t2 = -100
-                all_depth = 3
+                # print("Frame Scores:")
+                #
+                # def meanstd(len_scores, dic_scores, n, fns, t1, t2, all_depth):
+                #     split_scores = []
+                #     split_fn = []
+                #     no_split_scores = []
+                #     no_split_fn = []
+                #     i = 0
+                #     for dic_score, fn in zip(dic_scores, fns):
+                #         # normalized_data = (score - np.min(score)) / (np.max(score) - np.min(score))
+                #         score = dic_score['score']
+                #         depth = dic_score['depth']
+                #         mean = np.mean(score)
+                #         std = np.std(score)
+                #
+                #         top_n = heapq.nlargest(n, range(len(score)), score.__getitem__)
+                #         top_score = [score[t] for t in top_n]
+                #         # print(f"split {i}: ",len(score))
+                #         i += 1
+                #         mean_diff = np.mean(top_score) - mean
+                #         if mean_diff > t1 and std > t2:
+                #             no_split_scores.append(dic_score)
+                #             no_split_fn.append(fn)
+                #         elif depth < all_depth:
+                #             # elif len(score)>(len_scores/n)*2 and len(score) >= 8:
+                #             score1 = score[:len(score) // 2]
+                #             score2 = score[len(score) // 2:]
+                #             fn1 = fn[:len(score) // 2]
+                #             fn2 = fn[len(score) // 2:]
+                #             split_scores.append(dict(score=score1, depth=depth + 1))
+                #             split_scores.append(dict(score=score2, depth=depth + 1))
+                #             split_fn.append(fn1)
+                #             split_fn.append(fn2)
+                #         else:
+                #             no_split_scores.append(dic_score)
+                #             no_split_fn.append(fn)
+                #     if len(split_scores) > 0:
+                #         all_split_score, all_split_fn = meanstd(len_scores, split_scores, n, split_fn, t1, t2,
+                #                                                 all_depth)
+                #     else:
+                #         all_split_score = []
+                #         all_split_fn = []
+                #     all_split_score = no_split_scores + all_split_score
+                #     all_split_fn = no_split_fn + all_split_fn
+                #
+                #     return all_split_score, all_split_fn
+                # max_num_frames = 16
+                # t1 = 0.8
+                # t2 = -100
+                # all_depth = 3
                 boundaries = boundary_list[index]
                 print(boundaries)
                 for idx, score in scores:
