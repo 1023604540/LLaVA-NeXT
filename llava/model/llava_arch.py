@@ -381,8 +381,16 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 #print(f"boundaries:{boundaries}")
 
                 segment_memory = []
-                encoded_features = self.encode_images(image)
-                encoded_features = encoded_features.requires_grad_()
+                if image.shape[0] >= 256:
+                    seperate_video = []
+                    # split the image feature and encode them separately
+                    for i in range(0, image.shape[0], 256):
+                        encoded_segment = self.encode_images(image[i:i + 256])
+                        seperate_video.append(encoded_segment)
+                    encoded_features = torch.cat(seperate_video, dim=0)
+                else:
+                    encoded_features = self.encode_images(image)
+                # encoded_features = encoded_features.requires_grad_()
                 # print(
                 #     f"[DEBUG] Vision output requires_grad={encoded_features.requires_grad}, grad_fn={encoded_features.grad_fn}")
                 # torch.cuda.synchronize()
