@@ -63,7 +63,7 @@ def load_full_video(video_path):
     return dense_frames  # (frames, height, width, channels)
 
 
-def load_sampled_video(video_path, sample_fps=10):
+def load_sampled_video(video_path, sample_fps=1):
     # 初始化 VideoReader 对象
     vr = VideoReader(video_path, ctx=cpu(0))
 
@@ -120,7 +120,7 @@ print("load video")
 # Load and process video
 video_path = "/home/hpc/b232dd/b232dd16/LLaVA-OV/docs/needle_32.mp4"
 # video_frames = load_video(video_path, 32)
-video_frames = load_video(video_path, 256)
+video_frames = load_sampled_video(video_path, 1)
 print(video_frames.shape) # (16, 1024, 576, 3)
 image_tensors = []
 frames = image_processor.preprocess(video_frames, return_tensors="pt")["pixel_values"].half().cuda()
