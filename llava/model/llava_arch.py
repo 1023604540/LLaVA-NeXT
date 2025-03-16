@@ -386,7 +386,9 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     seperate_video = []
                     # split the image feature and encode them separately
                     for i in range(0, image.shape[0], 256):
-                        encoded_segment = self.encode_images(image[i:i + 256])
+                        temp_image = image[i:i + 256]
+                        print(temp_image.shape)
+                        encoded_segment = self.encode_images(temp_image)
                         print(f"Encoded segment shape : {encoded_segment.shape}")
                         seperate_video.append(encoded_segment)
                     encoded_features = torch.cat(seperate_video, dim=0)
