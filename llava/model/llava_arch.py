@@ -529,8 +529,9 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                         score = sim_matrix.max()  # 取所有patch和token中的最大值
                     elif reduction == 'mean':
                         score = sim_matrix.mean()  # 取平均值
-                    else:
-                        raise ValueError("Unknown reduction method: choose 'max' or 'mean'")
+                    elif reduction == 'sum':
+                        score = sim_matrix.sum()  # 取和
+
 
                     return score.item()
 
@@ -552,7 +553,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                         frame_scores.append((idx, score))
                     return frame_scores
 
-                scores = compute_all_frame_scores(image_feature, query_feature.squeeze(0), reduction='mean')
+                scores = compute_all_frame_scores(image_feature, query_feature.squeeze(0), reduction='sum')
                 # print("Frame Scores:")
                 #
                 # def meanstd(len_scores, dic_scores, n, fns, t1, t2, all_depth):
