@@ -69,13 +69,14 @@ def load_sampled_video(video_path, sample_fps=1):
 
     # 获取视频的原始帧率
     original_fps = vr.get_avg_fps()
+    print(f"Original FPS: {original_fps}")
 
     # 计算采样间隔
     sample_interval = int(original_fps // sample_fps)
 
     # 获取视频的总帧数
     total_frame_num = len(vr)
-
+    print(f"Total Frames: {total_frame_num}")
     # 生成需要采样的帧索引列表
     frame_idx = list(range(0, total_frame_num, sample_interval))
 
