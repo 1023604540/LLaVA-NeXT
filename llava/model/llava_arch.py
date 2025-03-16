@@ -386,7 +386,8 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     seperate_video = []
                     # split the image feature and encode them separately
                     for i in range(0, image.shape[0], 256):
-                        temp_image = image[i:i + 256]
+                        j = i + 256 if i + 256 < image.shape[0] else image.shape[0]
+                        temp_image = image[i:j]
                         print(temp_image.shape)
                         encoded_segment = self.encode_images(temp_image)
                         print(f"Encoded segment shape : {encoded_segment.shape}")
