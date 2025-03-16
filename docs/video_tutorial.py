@@ -72,7 +72,7 @@ def load_sampled_video(video_path, sample_fps=1):
     print(f"Original FPS: {original_fps}")
 
     # 计算采样间隔
-    sample_interval = int(original_fps // sample_fps)
+    sample_interval = round(original_fps / sample_fps)
 
     # 获取视频的总帧数
     total_frame_num = len(vr)
