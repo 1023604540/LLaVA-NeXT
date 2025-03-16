@@ -42,8 +42,8 @@ def segment(features, alpha=0.5, k=None):
         thresh = mean + alpha * std
         condition = depth_scores > thresh
         boundaries = condition.nonzero().squeeze(-1)
-        if len(boundaries) > 15: # limit max segments to prevent from OOM: 7 comes from RMT paper
-            boundaries = torch.topk(depth_scores, 15).indices.sort()[0]
+        #if len(boundaries) > 15: # limit max segments to prevent from OOM: 7 comes from RMT paper
+            #boundaries = torch.topk(depth_scores, 15).indices.sort()[0]
 
     boundaries = boundaries.tolist()
 
