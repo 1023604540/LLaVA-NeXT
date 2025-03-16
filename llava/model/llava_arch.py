@@ -374,7 +374,8 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     non_video_images.append(image)
                     non_video_positions.append(idx)
                     continue
-                boundaries = adjusted_segment(image.mean(dim=1).flatten(1,2))
+                # boundaries = adjusted_segment(image.mean(dim=1).flatten(1,2))
+                boundaries = segment(image.mean(dim=1).flatten(1, 2))
 
                 #print(f"boundaries:{len(boundaries)}")
                 #print(f"boundaries:{boundaries}")
