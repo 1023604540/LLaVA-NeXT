@@ -523,7 +523,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     # 计算余弦相似度矩阵，结果形状为 (196, token_num)
                     # 每个元素表示某个patch与某个token之间的相似度
                     sim_matrix = torch.matmul(frame_norm, query_norm.T)
-
+                    sim_matrix = sim_matrix.mean(dim=0)
                     # 根据归约方式将 (196, token_num) 的相似度矩阵化为单一分数
                     if reduction == 'max':
                         score = sim_matrix.max()  # 取所有patch和token中的最大值
