@@ -663,6 +663,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 # print(index)
                 # image_features[index] = selected_image_features
 
+            image_features = new_image_features
             mm_patch_merge_type = getattr(self.config, "mm_patch_merge_type", "flat")
             image_aspect_ratio = getattr(self.config, "image_aspect_ratio", "square")
             mm_newline_position = getattr(self.config, "mm_newline_position", "one_token")
