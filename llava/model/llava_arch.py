@@ -378,7 +378,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 boundaries = segment(image.mean(dim=1).flatten(1, 2))
 
                 #print(f"boundaries:{len(boundaries)}")
-                #print(f"boundaries:{boundaries}")
+                print(f"boundaries:{boundaries}")
 
                 segment_memory = []
                 if image.shape[0] >= 256:
