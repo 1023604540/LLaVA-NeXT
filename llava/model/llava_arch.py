@@ -456,214 +456,214 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
             # image_features = torch.split(image_features, split_sizes, dim=0)
             image_features = new_image_features
 
-            # Key Memory Selection Module
-            for index, image_feature in enumerate(image_features):
-                print(input_ids.shape)
-                cur_input_ids = input_ids[index]
-                print(cur_input_ids)
+            # # Key Memory Selection Module
+            # for index, image_feature in enumerate(image_features):
+            #     print(input_ids.shape)
+            #     cur_input_ids = input_ids[index]
+            #     print(cur_input_ids)
+            #
+            #     ############################## Conversation Template
+            #     # < | im_start | > system
+            #     # You are a helpful assistant. < | im_end | >
+            #     # < | im_start | > user
+            #     # < image >
+            #     # tell me what is going on in this video. < | im_end | >
+            #     # < | im_start | > assistant
+            #     ##############################
+            #     IM_END_TOKEN_ID = 151645  # "<|im_end|>"
+            #     IMAGE_TOKEN_ID = -200  # "<image>"
+            #
+            #     def extract_user_query_tokens(input_ids, image_token_id=IMAGE_TOKEN_ID,
+            #                                   im_end_token_id=IM_END_TOKEN_ID):
+            #         """
+            #         Extract tokens from the user message that come after the <image> token
+            #         and before the next <|im_end|> token.
+            #         """
+            #         # Ensure we work with a list of ints.
+            #         if isinstance(input_ids, torch.Tensor):
+            #             tokens = input_ids.tolist()
+            #         else:
+            #             tokens = input_ids
+            #
+            #         try:
+            #             # Find the first occurrence of the <image> token.
+            #             idx_image = tokens.index(image_token_id)
+            #             # Then find the next occurrence of the <|im_end|> token after the <image> token.
+            #             idx_im_end = tokens.index(im_end_token_id, idx_image)
+            #             # Extract tokens after the <image> token up to (but not including) the <|im_end|> token.
+            #             query_tokens = tokens[idx_image + 2: idx_im_end]  # Skip the <image> token and the space token.
+            #             query_tensor = torch.tensor(query_tokens, dtype=torch.long).unsqueeze(0).to(self.device)
+            #             return query_tensor
+            #         except ValueError:
+            #             # If the expected tokens are not found, return an empty list.
+            #             return []
+            #
+            #     query = extract_user_query_tokens(cur_input_ids)
+            #     print(f"the query is : {query}")
+            #     query_feature = self.get_model().embed_tokens(query)
+            #     print(query_feature.shape)  # [1, n, 3584]
+            #
+            #     def compute_frame_score(frame_feature, query_embedding, reduction='max'):
+            #         """
+            #         计算单个frame与query之间的相似度。
+            #
+            #         参数:
+            #             frame_feature: tensor, 形状为 (196, 3584)
+            #             query_embedding: tensor, 形状为 (token_num, 3584)
+            #             reduction: str, 归约方式，可以选择 'max' 或 'mean'
+            #
+            #         返回:
+            #             score: float, 该frame与query的相似度分数
+            #         """
+            #         # 对frame的patch特征进行归一化 (在最后一维)
+            #         frame_norm = F.normalize(frame_feature, dim=-1)  # (196, 3584)
+            #         # 对query的token特征进行归一化
+            #         query_norm = F.normalize(query_embedding, dim=-1)  # (token_num, 3584)
+            #
+            #         # 计算余弦相似度矩阵，结果形状为 (196, token_num)
+            #         # 每个元素表示某个patch与某个token之间的相似度
+            #         sim_matrix = torch.matmul(frame_norm, query_norm.T)
+            #
+            #         # 根据归约方式将 (196, token_num) 的相似度矩阵化为单一分数
+            #         if reduction == 'max':
+            #             score = sim_matrix.max()  # 取所有patch和token中的最大值
+            #         elif reduction == 'mean':
+            #             score = sim_matrix.mean()  # 取平均值
+            #         else:
+            #             raise ValueError("Unknown reduction method: choose 'max' or 'mean'")
+            #
+            #         return score.item()
+            #
+            #     def compute_all_frame_scores(image_features, query_embedding, reduction='max'):
+            #         """
+            #         对每一帧进行相似度计算，返回 (frame_index, score) 的列表。
+            #
+            #         参数:
+            #             image_features: tensor, 形状为 (frame_num, 196, 3584)
+            #             query_embedding: tensor, 形状为 (token_num, 3584)
+            #             reduction: str, 归约方式 ('max' 或 'mean')
+            #
+            #         返回:
+            #             frame_scores: list of tuple, 每个元素为 (frame_index, score)
+            #         """
+            #         frame_scores = []
+            #         for idx, frame_feature in enumerate(image_features):
+            #             score = compute_frame_score(frame_feature, query_embedding, reduction)
+            #             frame_scores.append((idx, score))
+            #         return frame_scores
+            #
+            #     scores = compute_all_frame_scores(image_feature, query_feature.squeeze(0), reduction='mean')
+            #     # print("Frame Scores:")
+            #     #
+            #     # def meanstd(len_scores, dic_scores, n, fns, t1, t2, all_depth):
+            #     #     split_scores = []
+            #     #     split_fn = []
+            #     #     no_split_scores = []
+            #     #     no_split_fn = []
+            #     #     i = 0
+            #     #     for dic_score, fn in zip(dic_scores, fns):
+            #     #         # normalized_data = (score - np.min(score)) / (np.max(score) - np.min(score))
+            #     #         score = dic_score['score']
+            #     #         depth = dic_score['depth']
+            #     #         mean = np.mean(score)
+            #     #         std = np.std(score)
+            #     #
+            #     #         top_n = heapq.nlargest(n, range(len(score)), score.__getitem__)
+            #     #         top_score = [score[t] for t in top_n]
+            #     #         # print(f"split {i}: ",len(score))
+            #     #         i += 1
+            #     #         mean_diff = np.mean(top_score) - mean
+            #     #         if mean_diff > t1 and std > t2:
+            #     #             no_split_scores.append(dic_score)
+            #     #             no_split_fn.append(fn)
+            #     #         elif depth < all_depth:
+            #     #             # elif len(score)>(len_scores/n)*2 and len(score) >= 8:
+            #     #             score1 = score[:len(score) // 2]
+            #     #             score2 = score[len(score) // 2:]
+            #     #             fn1 = fn[:len(score) // 2]
+            #     #             fn2 = fn[len(score) // 2:]
+            #     #             split_scores.append(dict(score=score1, depth=depth + 1))
+            #     #             split_scores.append(dict(score=score2, depth=depth + 1))
+            #     #             split_fn.append(fn1)
+            #     #             split_fn.append(fn2)
+            #     #         else:
+            #     #             no_split_scores.append(dic_score)
+            #     #             no_split_fn.append(fn)
+            #     #     if len(split_scores) > 0:
+            #     #         all_split_score, all_split_fn = meanstd(len_scores, split_scores, n, split_fn, t1, t2,
+            #     #                                                 all_depth)
+            #     #     else:
+            #     #         all_split_score = []
+            #     #         all_split_fn = []
+            #     #     all_split_score = no_split_scores + all_split_score
+            #     #     all_split_fn = no_split_fn + all_split_fn
+            #     #
+            #     #     return all_split_score, all_split_fn
+            #     # max_num_frames = 16
+            #     # t1 = 0.8
+            #     # t2 = -100
+            #     # all_depth = 3
+            #     boundaries = boundary_list[index]
+            #     print(boundaries)
+            #     for idx, score in scores:
+            #         print(f"Frame {idx}: score = {score}")
+            #     # -------------------- 关键帧挑选部分 --------------------
+            #     # 将 (frame_index, score) 分离为两个列表
+            #     frame_score_values = [score for frame_idx, score in scores]
+            #     segment_scores = []
+            #     for i in range(len(boundaries) - 1):
+            #         start = boundaries[i]
+            #         end = boundaries[i + 1]
+            #         # 计算该 segment 内所有帧的平均相似度作为该 segment 的分数
+            #         segment_score = np.mean(frame_score_values[start:end])
+            #         segment_scores.append(segment_score)
+            #         print(f"Segment {i} (frames {start}-{end - 1}) score: {segment_score}")
+            #
+            #     # 选择最相关的 segment（分数最高）
+            #     selected_segment_index = np.argmax(segment_scores)
+            #     selected_segment_start = boundaries[selected_segment_index]
+            #     selected_segment_end = boundaries[selected_segment_index + 1]
+            #     print(
+            #         f"Selected Segment: Index {selected_segment_index} with frame range {selected_segment_start} to {selected_segment_end - 1}")
+            #
+            #     # 从 image_feature 中提取出该 segment 的所有帧
+            #     selected_segment_feature = image_feature[selected_segment_start:selected_segment_end]
+            #
+            #     # 直接更新 image_features 列表中的元素
+            #     image_features[index] = selected_segment_feature
+            #
+            #     # # 如果帧数超过阈值，则进行关键帧挑选，否则全部保留
+            #     # if len(frame_score_values) >= max_num_frames:
+            #     #     # 归一化分数到 [0,1] 区间
+            #     #     score_arr = np.array(frame_score_values)
+            #     #     normalized_scores = (score_arr - np.min(score_arr)) / (np.max(score_arr) - np.min(score_arr))
+            #     #
+            #     #     # 构造初始的分数字典，深度为0
+            #     #     initial_score_dict = dict(score=normalized_scores.tolist(), depth=0)
+            #     #     # 同时传入所有帧对应的索引列表
+            #     #     selected_score_dicts, selected_frame_indices = meanstd(len(normalized_scores),
+            #     #                                                            [initial_score_dict],
+            #     #                                                            max_num_frames,
+            #     #                                                            [frame_indices],
+            #     #                                                            t1, t2, all_depth)
+            #     #
+            #     #     # 根据每个分割段的深度决定挑选的帧数
+            #     #     selected_frames = []
+            #     #     for seg, seg_indices in zip(selected_score_dicts, selected_frame_indices):
+            #     #         f_num = int(max_num_frames / (2 ** seg['depth']))
+            #     #         # 从该段中挑选得分最高的 f_num 个帧
+            #     #         topk_indices = heapq.nlargest(f_num, range(len(seg['score'])), seg['score'].__getitem__)
+            #     #         selected_frames.extend([seg_indices[i] for i in topk_indices])
+            #     #     selected_frames.sort()
+            #     # else:
+            #     #     selected_frames = frame_indices
+            #     #
+            #     # print("Selected Key Frames:", selected_frames)
+            #     # selected_image_features = image_feature[selected_frames]
+            #     # print(index)
+            #     # image_features[index] = selected_image_features
 
-                ############################## Conversation Template
-                # < | im_start | > system
-                # You are a helpful assistant. < | im_end | >
-                # < | im_start | > user
-                # < image >
-                # tell me what is going on in this video. < | im_end | >
-                # < | im_start | > assistant
-                ##############################
-                IM_END_TOKEN_ID = 151645  # "<|im_end|>"
-                IMAGE_TOKEN_ID = -200  # "<image>"
 
-                def extract_user_query_tokens(input_ids, image_token_id=IMAGE_TOKEN_ID,
-                                              im_end_token_id=IM_END_TOKEN_ID):
-                    """
-                    Extract tokens from the user message that come after the <image> token
-                    and before the next <|im_end|> token.
-                    """
-                    # Ensure we work with a list of ints.
-                    if isinstance(input_ids, torch.Tensor):
-                        tokens = input_ids.tolist()
-                    else:
-                        tokens = input_ids
-
-                    try:
-                        # Find the first occurrence of the <image> token.
-                        idx_image = tokens.index(image_token_id)
-                        # Then find the next occurrence of the <|im_end|> token after the <image> token.
-                        idx_im_end = tokens.index(im_end_token_id, idx_image)
-                        # Extract tokens after the <image> token up to (but not including) the <|im_end|> token.
-                        query_tokens = tokens[idx_image + 2: idx_im_end]  # Skip the <image> token and the space token.
-                        query_tensor = torch.tensor(query_tokens, dtype=torch.long).unsqueeze(0).to(self.device)
-                        return query_tensor
-                    except ValueError:
-                        # If the expected tokens are not found, return an empty list.
-                        return []
-
-                query = extract_user_query_tokens(cur_input_ids)
-                print(f"the query is : {query}")
-                query_feature = self.get_model().embed_tokens(query)
-                print(query_feature.shape)  # [1, n, 3584]
-
-                def compute_frame_score(frame_feature, query_embedding, reduction='max'):
-                    """
-                    计算单个frame与query之间的相似度。
-
-                    参数:
-                        frame_feature: tensor, 形状为 (196, 3584)
-                        query_embedding: tensor, 形状为 (token_num, 3584)
-                        reduction: str, 归约方式，可以选择 'max' 或 'mean'
-
-                    返回:
-                        score: float, 该frame与query的相似度分数
-                    """
-                    # 对frame的patch特征进行归一化 (在最后一维)
-                    frame_norm = F.normalize(frame_feature, dim=-1)  # (196, 3584)
-                    # 对query的token特征进行归一化
-                    query_norm = F.normalize(query_embedding, dim=-1)  # (token_num, 3584)
-
-                    # 计算余弦相似度矩阵，结果形状为 (196, token_num)
-                    # 每个元素表示某个patch与某个token之间的相似度
-                    sim_matrix = torch.matmul(frame_norm, query_norm.T)
-
-                    # 根据归约方式将 (196, token_num) 的相似度矩阵化为单一分数
-                    if reduction == 'max':
-                        score = sim_matrix.max()  # 取所有patch和token中的最大值
-                    elif reduction == 'mean':
-                        score = sim_matrix.mean()  # 取平均值
-                    else:
-                        raise ValueError("Unknown reduction method: choose 'max' or 'mean'")
-
-                    return score.item()
-
-                def compute_all_frame_scores(image_features, query_embedding, reduction='max'):
-                    """
-                    对每一帧进行相似度计算，返回 (frame_index, score) 的列表。
-
-                    参数:
-                        image_features: tensor, 形状为 (frame_num, 196, 3584)
-                        query_embedding: tensor, 形状为 (token_num, 3584)
-                        reduction: str, 归约方式 ('max' 或 'mean')
-
-                    返回:
-                        frame_scores: list of tuple, 每个元素为 (frame_index, score)
-                    """
-                    frame_scores = []
-                    for idx, frame_feature in enumerate(image_features):
-                        score = compute_frame_score(frame_feature, query_embedding, reduction)
-                        frame_scores.append((idx, score))
-                    return frame_scores
-
-                scores = compute_all_frame_scores(image_feature, query_feature.squeeze(0), reduction='mean')
-                # print("Frame Scores:")
-                #
-                # def meanstd(len_scores, dic_scores, n, fns, t1, t2, all_depth):
-                #     split_scores = []
-                #     split_fn = []
-                #     no_split_scores = []
-                #     no_split_fn = []
-                #     i = 0
-                #     for dic_score, fn in zip(dic_scores, fns):
-                #         # normalized_data = (score - np.min(score)) / (np.max(score) - np.min(score))
-                #         score = dic_score['score']
-                #         depth = dic_score['depth']
-                #         mean = np.mean(score)
-                #         std = np.std(score)
-                #
-                #         top_n = heapq.nlargest(n, range(len(score)), score.__getitem__)
-                #         top_score = [score[t] for t in top_n]
-                #         # print(f"split {i}: ",len(score))
-                #         i += 1
-                #         mean_diff = np.mean(top_score) - mean
-                #         if mean_diff > t1 and std > t2:
-                #             no_split_scores.append(dic_score)
-                #             no_split_fn.append(fn)
-                #         elif depth < all_depth:
-                #             # elif len(score)>(len_scores/n)*2 and len(score) >= 8:
-                #             score1 = score[:len(score) // 2]
-                #             score2 = score[len(score) // 2:]
-                #             fn1 = fn[:len(score) // 2]
-                #             fn2 = fn[len(score) // 2:]
-                #             split_scores.append(dict(score=score1, depth=depth + 1))
-                #             split_scores.append(dict(score=score2, depth=depth + 1))
-                #             split_fn.append(fn1)
-                #             split_fn.append(fn2)
-                #         else:
-                #             no_split_scores.append(dic_score)
-                #             no_split_fn.append(fn)
-                #     if len(split_scores) > 0:
-                #         all_split_score, all_split_fn = meanstd(len_scores, split_scores, n, split_fn, t1, t2,
-                #                                                 all_depth)
-                #     else:
-                #         all_split_score = []
-                #         all_split_fn = []
-                #     all_split_score = no_split_scores + all_split_score
-                #     all_split_fn = no_split_fn + all_split_fn
-                #
-                #     return all_split_score, all_split_fn
-                # max_num_frames = 16
-                # t1 = 0.8
-                # t2 = -100
-                # all_depth = 3
-                boundaries = boundary_list[index]
-                print(boundaries)
-                for idx, score in scores:
-                    print(f"Frame {idx}: score = {score}")
-                # -------------------- 关键帧挑选部分 --------------------
-                # 将 (frame_index, score) 分离为两个列表
-                frame_score_values = [score for frame_idx, score in scores]
-                segment_scores = []
-                for i in range(len(boundaries) - 1):
-                    start = boundaries[i]
-                    end = boundaries[i + 1]
-                    # 计算该 segment 内所有帧的平均相似度作为该 segment 的分数
-                    segment_score = np.mean(frame_score_values[start:end])
-                    segment_scores.append(segment_score)
-                    print(f"Segment {i} (frames {start}-{end - 1}) score: {segment_score}")
-
-                # 选择最相关的 segment（分数最高）
-                selected_segment_index = np.argmax(segment_scores)
-                selected_segment_start = boundaries[selected_segment_index]
-                selected_segment_end = boundaries[selected_segment_index + 1]
-                print(
-                    f"Selected Segment: Index {selected_segment_index} with frame range {selected_segment_start} to {selected_segment_end - 1}")
-
-                # 从 image_feature 中提取出该 segment 的所有帧
-                selected_segment_feature = image_feature[selected_segment_start:selected_segment_end]
-
-                # 直接更新 image_features 列表中的元素
-                image_features[index] = selected_segment_feature
-
-                # # 如果帧数超过阈值，则进行关键帧挑选，否则全部保留
-                # if len(frame_score_values) >= max_num_frames:
-                #     # 归一化分数到 [0,1] 区间
-                #     score_arr = np.array(frame_score_values)
-                #     normalized_scores = (score_arr - np.min(score_arr)) / (np.max(score_arr) - np.min(score_arr))
-                #
-                #     # 构造初始的分数字典，深度为0
-                #     initial_score_dict = dict(score=normalized_scores.tolist(), depth=0)
-                #     # 同时传入所有帧对应的索引列表
-                #     selected_score_dicts, selected_frame_indices = meanstd(len(normalized_scores),
-                #                                                            [initial_score_dict],
-                #                                                            max_num_frames,
-                #                                                            [frame_indices],
-                #                                                            t1, t2, all_depth)
-                #
-                #     # 根据每个分割段的深度决定挑选的帧数
-                #     selected_frames = []
-                #     for seg, seg_indices in zip(selected_score_dicts, selected_frame_indices):
-                #         f_num = int(max_num_frames / (2 ** seg['depth']))
-                #         # 从该段中挑选得分最高的 f_num 个帧
-                #         topk_indices = heapq.nlargest(f_num, range(len(seg['score'])), seg['score'].__getitem__)
-                #         selected_frames.extend([seg_indices[i] for i in topk_indices])
-                #     selected_frames.sort()
-                # else:
-                #     selected_frames = frame_indices
-                #
-                # print("Selected Key Frames:", selected_frames)
-                # selected_image_features = image_feature[selected_frames]
-                # print(index)
-                # image_features[index] = selected_image_features
-
-            image_features = new_image_features
             mm_patch_merge_type = getattr(self.config, "mm_patch_merge_type", "flat")
             image_aspect_ratio = getattr(self.config, "image_aspect_ratio", "square")
             mm_newline_position = getattr(self.config, "mm_newline_position", "one_token")
