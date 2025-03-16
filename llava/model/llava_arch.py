@@ -531,6 +531,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                         score = sim_matrix.mean()  # 取平均值
                     elif reduction == 'sum':
                         score = sim_matrix.sum()  # 取和
+                        print(sim_matrix.shape)
 
 
                     return score.item()
