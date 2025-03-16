@@ -158,7 +158,7 @@ image_tensors.append(frames)
 # Prepare conversation input
 conv_template = "qwen_1_5"
 
-question = f"{DEFAULT_IMAGE_TOKEN}\n what is the woman doing?"
+question = f"{DEFAULT_IMAGE_TOKEN}\n Woman sitting in front of laptop?"
 conv = copy.deepcopy(conv_templates[conv_template])
 conv.append_message(conv.roles[0], question)
 conv.append_message(conv.roles[1], None)
