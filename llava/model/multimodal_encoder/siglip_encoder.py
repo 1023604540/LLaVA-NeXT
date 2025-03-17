@@ -444,9 +444,9 @@ class SigLipVisionTransformer(nn.Module):
         last_hidden_state = self.post_layernorm(last_hidden_state)
 
         pooled_output = self.head(last_hidden_state)
-
-        # if not return_dict:
-        #     return (last_hidden_state, pooled_output) + encoder_outputs[1:]
+        print("SigLipVisionTransformer is called")
+        if not return_dict:
+             return (last_hidden_state, pooled_output) + encoder_outputs[1:]
 
         return BaseModelOutputWithPooling(
             last_hidden_state=last_hidden_state,
