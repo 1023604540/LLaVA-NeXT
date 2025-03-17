@@ -630,7 +630,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
 
                 # 从 image_feature 中提取出该 segment 的所有帧
                 selected_segment_feature = image_feature[selected_segment_start:selected_segment_end]
-                selected_segment_feature = image_feature[149:165]
+                #selected_segment_feature = image_feature[149:165]
                 # 直接更新 image_features 列表中的元素
                 image_features[index] = selected_segment_feature
 

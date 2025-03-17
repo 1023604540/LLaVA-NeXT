@@ -119,7 +119,7 @@ def dynamic_load_video(video_path):
 
 print("load video")
 # Load and process video
-video_path = "/home/hpc/b232dd/b232dd16/LLaVA-OV/docs/needle_32.mp4"
+video_path = "/home/hpc/b232dd/b232dd16/LLaVA-OV/docs/text_test.mp4"
 # video_frames = load_video(video_path, 32)
 video_frames = load_sampled_video(video_path, 1)
 print(video_frames.shape) # (16, 1024, 576, 3)
@@ -158,7 +158,7 @@ image_tensors.append(frames)
 # Prepare conversation input
 conv_template = "qwen_1_5"
 
-question = f"{DEFAULT_IMAGE_TOKEN}\n 小田鼠在干什么？"
+question = f"{DEFAULT_IMAGE_TOKEN}\n Describe the video content."
 conv = copy.deepcopy(conv_templates[conv_template])
 conv.append_message(conv.roles[0], question)
 conv.append_message(conv.roles[1], None)
