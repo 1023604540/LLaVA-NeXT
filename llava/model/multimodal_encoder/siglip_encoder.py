@@ -567,8 +567,8 @@ class SigLipVisionTower(nn.Module):
 
         self.vision_tower = SigLipVisionModel.from_pretrained(self.vision_tower_name, device_map=device_map)
 
-        del self.vision_tower.vision_model.encoder.layers[-1:]
-        self.vision_tower.vision_model.head = nn.Identity()
+        #del self.vision_tower.vision_model.encoder.layers[-1:]
+        #self.vision_tower.vision_model.head = nn.Identity()
         self.vision_tower.requires_grad_(False)
 
         self.is_loaded = True
@@ -587,6 +587,8 @@ class SigLipVisionTower(nn.Module):
             assert image_features.shape[-2] == 729
 
         return image_features
+
+
 
     @property
     def dummy_feature(self):
