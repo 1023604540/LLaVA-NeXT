@@ -554,7 +554,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                         frame_scores.append((idx, score))
                     return frame_scores
 
-                scores = compute_all_frame_scores(image_feature, query_feature.squeeze(0), reduction='max')
+                scores = compute_all_frame_scores(image_feature, query_feature.squeeze(0), reduction='mean')
                 # print("Frame Scores:")
                 #
                 # def meanstd(len_scores, dic_scores, n, fns, t1, t2, all_depth):
