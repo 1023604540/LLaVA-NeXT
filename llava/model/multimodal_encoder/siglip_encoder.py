@@ -476,7 +476,7 @@ class SigLipMultiheadAttentionPoolingHead(nn.Module):
         residual = hidden_state
         hidden_state = self.layernorm(hidden_state)
         hidden_state = residual + self.mlp(hidden_state)
-
+        print("MAP is called")
         return hidden_state[:, 0]
 
 
@@ -567,9 +567,9 @@ class SigLipVisionTower(nn.Module):
 
         self.vision_tower = SigLipVisionModel.from_pretrained(self.vision_tower_name, device_map=device_map)
 
-        #del self.vision_tower.vision_model.encoder.layers[-1:]
-        #self.vision_tower.vision_model.head = nn.Identity()
-        print("vision_tower head is retained")
+        del self.vision_tower.vision_model.encoder.layers[-1:]
+        self.vision_tower.vision_model.head = nn.Identity()
+        # print("vision_tower head is retained")
         self.vision_tower.requires_grad_(False)
 
         self.is_loaded = True
