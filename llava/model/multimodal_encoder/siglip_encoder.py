@@ -477,6 +477,7 @@ class SigLipMultiheadAttentionPoolingHead(nn.Module):
         hidden_state = self.layernorm(hidden_state)
         hidden_state = residual + self.mlp(hidden_state)
         print("MAP is called")
+        print(hidden_state[:, 0].shape)
         return hidden_state[:, 0]
 
 
