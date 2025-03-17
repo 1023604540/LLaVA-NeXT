@@ -587,6 +587,7 @@ class SigLipVisionTower(nn.Module):
         else:
             image_forward_outs = self.vision_tower(images.to(device=self.device, dtype=self.dtype), output_hidden_states=True)
             print("image_forward_out", image_forward_outs.hidden_states[-1].shape)
+            print("image_forward_out", image_forward_outs.pooler_output.shape)
             image_features = image_forward_outs.hidden_states[-1].to(images.dtype)
             assert image_features.shape[-2] == 729
 
