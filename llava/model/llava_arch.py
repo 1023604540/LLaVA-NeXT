@@ -521,13 +521,14 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                         score: float, 该frame与query的相似度分数
                     """
                     # 对frame的patch特征进行归一化 (在最后一维)
-                    frame_norm = F.normalize(frame_feature, dim=-1)  # (196, 3584)
+                    frame_norm = F.normalize(frame_feature, dim=-1)  # (1, 3584)
                     # 对query的token特征进行归一化
                     query_norm = F.normalize(query_embedding, dim=-1)  # (token_num, 3584)
 
                     # 计算余弦相似度矩阵，结果形状为 (196, token_num)
                     # 每个元素表示某个patch与某个token之间的相似度
                     sim_matrix = torch.matmul(frame_norm, query_norm.T)
+                    print(f"sim_matrix shape : {sim_matrix.shape}")
                     sim_matrix = sim_matrix.mean(dim=0)
                     # 根据归约方式将 (196, token_num) 的相似度矩阵化为单一分数
                     if reduction == 'max':
