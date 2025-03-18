@@ -569,7 +569,7 @@ class SigLipVisionTower(nn.Module):
         self.vision_tower = SigLipVisionModel.from_pretrained(self.vision_tower_name, device_map=device_map)
 
         del self.vision_tower.vision_model.encoder.layers[-1:]
-        self.vision_tower.vision_model.head = nn.Identity()
+        # self.vision_tower.vision_model.head = nn.Identity()
         # print("vision_tower head is retained")
         self.vision_tower.requires_grad_(False)
 
@@ -588,8 +588,8 @@ class SigLipVisionTower(nn.Module):
             image_forward_outs = self.vision_tower(images.to(device=self.device, dtype=self.dtype), output_hidden_states=True)
             print("image_forward_out", image_forward_outs.hidden_states[-1].shape)
             print("image_forward_out", image_forward_outs.pooler_output.shape)
-            image_features = image_forward_outs.hidden_states[-1].to(images.dtype)
-            assert image_features.shape[-2] == 729
+            image_features = [image_forward_outs.hidden_states[-1].to(images.dtype),image_forward_outs.pooler_output.to(images.dtype)]
+            assert image_features.shape[0][-2] == 729
 
         return image_features
 

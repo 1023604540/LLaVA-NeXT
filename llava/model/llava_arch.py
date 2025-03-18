@@ -395,6 +395,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     encoded_features = torch.cat(seperate_video, dim=0)
                 else:
                     encoded_features = self.encode_images(image)
+                print(f"Encoded features shape : {encoded_features.shape}")
                 # encoded_features = encoded_features.requires_grad_()
                 # print(
                 #     f"[DEBUG] Vision output requires_grad={encoded_features.requires_grad}, grad_fn={encoded_features.grad_fn}")
