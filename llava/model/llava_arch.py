@@ -538,8 +538,6 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     elif reduction == 'sum':
                         score = sim_matrix.sum()  # 取和
                         print(sim_matrix.shape)
-
-
                     return score.item()
 
                 def compute_all_frame_scores(image_features, query_embedding, reduction='max'):
@@ -555,12 +553,12 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                         frame_scores: list of tuple, 每个元素为 (frame_index, score)
                     """
                     frame_scores = []
-                    for idx, frame_feature in enumerate(projected_map):
+                    for idx, frame_feature in enumerate(image_features):
                         score = compute_frame_score(frame_feature, query_embedding, reduction)
                         frame_scores.append((idx, score))
                     return frame_scores
 
-                scores = compute_all_frame_scores(image_feature, query_feature.squeeze(0), reduction='mean')
+                scores = compute_all_frame_scores(projected_map, query_feature.squeeze(0), reduction='mean')
                 # print("Frame Scores:")
                 #
                 # def meanstd(len_scores, dic_scores, n, fns, t1, t2, all_depth):
