@@ -589,7 +589,7 @@ class SigLipVisionTower(nn.Module):
             print("image_forward_out", image_forward_outs.hidden_states[-1].shape)
             print("image_forward_out", image_forward_outs.pooler_output.shape)
             image_features = [image_forward_outs.hidden_states[-1].to(images.dtype),image_forward_outs.pooler_output.to(images.dtype)]
-            assert image_features.shape[0][-2] == 729
+            assert image_features[0].shape[-2] == 729
 
         return image_features
 
