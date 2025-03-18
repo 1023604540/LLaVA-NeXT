@@ -395,7 +395,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 mem_shape = memory_feature.shape
                 memory_feature = memory_feature.view(-1, mem_shape[-1])  # Flatten (frames*729, 1152)
                 memory_feature = self.get_model().memory_mlp(memory_feature)  # MLP with GELU activation
-
+                memory_feature = memory_feature.view(*mem_shape)  # Reshape back to (frames, 729, 1152)
                 rank0_print(f"cat_segment_memory shape : {memory_feature.shape}")
                 # if torch.isnan(memory_feature).any():
                 #     raise ValueError("NaNs detected in attention_model output!")
