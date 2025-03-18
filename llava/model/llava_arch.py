@@ -394,8 +394,11 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                         seperate_video.append(encoded_segment)
                     encoded_features = torch.cat(seperate_video, dim=0)
                 else:
-                    encoded_features = self.encode_images(image)
-                print(f"Encoded features shape : {len(encoded_features)}")
+                    vision_tower_output = self.encode_images(image)
+                print(f"Encoded features shape : {len(vision_tower_output)}")
+                encoded_features = vision_tower_output[0]
+                map_output = vision_tower_output[1]
+
                 # encoded_features = encoded_features.requires_grad_()
                 # print(
                 #     f"[DEBUG] Vision output requires_grad={encoded_features.requires_grad}, grad_fn={encoded_features.grad_fn}")
@@ -443,6 +446,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
             # Apply mm_projector
             split_sizes = [image.shape[0] for image in images_list]
             projected_feature = self.get_model().mm_projector(torch.cat([image for image in images_list], dim=0))
+            projected_map = self.get_model().mm_projector(map_output)
             image_features = torch.split(projected_feature, split_sizes)
             rank_print(f"Encoded image feats : {[x.shape for x in image_features]}")  # [frame_num, 729, 3584]
 
@@ -550,7 +554,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                         frame_scores: list of tuple, 每个元素为 (frame_index, score)
                     """
                     frame_scores = []
-                    for idx, frame_feature in enumerate(image_features):
+                    for idx, frame_feature in enumerate(projected_map):
                         score = compute_frame_score(frame_feature, query_embedding, reduction)
                         frame_scores.append((idx, score))
                     return frame_scores
