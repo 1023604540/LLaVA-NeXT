@@ -447,6 +447,8 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
             split_sizes = [image.shape[0] for image in images_list]
             projected_feature = self.get_model().mm_projector(torch.cat([image for image in images_list], dim=0))
             projected_map = self.get_model().mm_projector(map_output)
+            if torch.isnan(projected_map).any():
+                print("Nan detected in projected_map")
             image_features = torch.split(projected_feature, split_sizes)
             rank_print(f"Encoded image feats : {[x.shape for x in image_features]}")  # [frame_num, 729, 3584]
 
