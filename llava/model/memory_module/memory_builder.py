@@ -105,11 +105,8 @@ class MultimodalOpsMixin:
             video_long_memory_length, video_Turing_memory_length, etc.
         """
         video_long_memory_length = getattr(self.config, "video_long_memory_length", 3)
-        video_Turing_memory_length = getattr(self.config, "video_Turing_memory_length", 3)
-        video_current_memory_length = getattr(self.config, "video_current_memory_length", 1)
+        video_current_memory_length = getattr(self.config, "video_current_memory_length", 0)
         compress_long_memory_size = getattr(self.config, "compress_long_memory_size", 27)
-        compress_Turing_memory_size = getattr(self.config, "compress_Turing_memory_size", 27)
-        compress_Turing_update_ratio = getattr(self.config, "compress_Turing_update_ratio", 0.2)
         video_sample_type = getattr(self.config, "video_sample_type", "weighted_kmeans")
 
         # A dictionary mapping sample types to functions (assumed to be imported or defined elsewhere)
@@ -139,16 +136,11 @@ class MultimodalOpsMixin:
             if cur_start == 0:
                 cur_memory = img_feature[:0]
                 long_memory = img_feature
-                Turing_memory = img_feature
             else:
                 cur_memory = img_feature[-cur_start:]
                 long_memory = img_feature[:-cur_start]
-                Turing_memory = img_feature[:-cur_start]
-
             if compress_long_memory_size * compress_long_memory_size != long_memory.shape[1]:
                 long_memory = self.compress_spatial_features(long_memory, compress_long_memory_size)
-            if compress_Turing_memory_size * compress_Turing_memory_size != Turing_memory.shape[1]:
-                Turing_memory = self.compress_spatial_features(Turing_memory, compress_Turing_memory_size)
 
             if video_long_memory_length == 0 or long_memory.shape[0] == 0:
                 long_memory_compressed = long_memory[:0]
@@ -164,27 +156,37 @@ class MultimodalOpsMixin:
                 min_indices = torch.argmin(dists, dim=0)
                 key_memory = img_feature[min_indices]
                 cur_memory = torch.cat([key_memory, cur_memory], dim=0)
-
-            if video_Turing_memory_length == 0 or Turing_memory.shape[0] == 0:
-                Turing_memory_compressed = Turing_memory[:0]
-            else:
-                Turing_memory_compressed, _ = attention_feature(
-                    Turing_memory, video_Turing_memory_length, self.attention, update_ratio=compress_Turing_update_ratio
-                )
-            print(f"Memory: Long {long_memory_compressed.shape}, Turing {Turing_memory_compressed.shape}, Cur {cur_memory.shape}")
+            print(f"Memory: Long {long_memory_compressed.shape}, Cur {cur_memory.shape}")
             if long_memory_compressed.shape[0] < video_long_memory_length:
                 long_memory_compressed = long_memory[:0]
-            if Turing_memory_compressed.shape[0] < video_Turing_memory_length:
-                Turing_memory_compressed = Turing_memory[:0]
             memory_feature = torch.cat([
-                Turing_memory_compressed.view(-1, 729, 1152),   #（9，9*9，1152）（1，729，1152）
                 long_memory_compressed.view(-1, 729, 1152),
                 cur_memory.view(-1, 729, 1152),
             ], dim=0)
-
-            mem_shape = memory_feature.shape  # e.g. (frames, 729, 1152)
-            memory_feature = memory_feature.view(-1, mem_shape[-1])  # Flatten (frames*729, 1152)
-            memory_feature = self.get_model().memory_mlp(memory_feature)  # MLP with GELU activation
-            memory_feature = memory_feature.view(*mem_shape)
             new_image_features.append(memory_feature)
         return new_image_features
+
+    def compress_global_features(self, image_features):
+        """
+        Compress temporal features from image_features.
+        This method depends on configuration parameters such as:
+            video_long_memory_length, video_Turing_memory_length, etc.
+        """
+        video_turing_memory_length = getattr(self.config, "video_Turing_memory_length", 2)
+        compress_turing_memory_size = getattr(self.config, "compress_Turing_memory_size", 27)
+        compress_turing_update_ratio = getattr(self.config, "compress_Turing_update_ratio", 0.2)
+
+        turing_memory = image_features
+        if compress_turing_memory_size * compress_turing_memory_size != turing_memory.shape[1]:
+            turing_memory = self.compress_spatial_features(turing_memory, compress_turing_memory_size)
+
+        if video_turing_memory_length == 0 or turing_memory.shape[0] == 0:
+            turing_memory_compressed = turing_memory[:0]
+        else:
+            turing_memory_compressed, _ = attention_feature(
+                turing_memory, video_turing_memory_length, self.attention, update_ratio=compress_turing_update_ratio
+            )
+        print(f"Memory: Turing {turing_memory_compressed.shape}")
+        turing_memory = turing_memory_compressed.view(-1, 729, 1152)
+
+        return turing_memory

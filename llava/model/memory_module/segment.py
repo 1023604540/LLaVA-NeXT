@@ -1,4 +1,5 @@
 import torch
+import math
 
 def cal_depth_score(sim_scores):
     n = sim_scores.shape[0]
@@ -184,3 +185,63 @@ def segment_left(features, alpha=0.5, k=None):
 
     return boundaries
 
+
+def uniform_segment_num(features, segment_num):
+    """
+    将输入帧均匀划分为 n 个段.
+
+    参数:
+        features: torch.Tensor, 形状 (t, d)
+        n: int, 需要划分的段数
+
+    返回:
+        boundaries: list, 分段边界索引列表（最后一个元素为 t）
+    """
+    t = features.shape[0]
+    if t == 1:
+        return [0]
+
+    # 当 n 大于或等于帧数时，每一帧都作为一个段划分
+    if segment_num >= t:
+        boundaries = list(range(1, t))
+        boundaries.append(t)
+        return boundaries
+
+    boundaries = []
+    for i in range(1, segment_num):
+        # 使用向下取整确保索引不超出范围
+        boundary = math.floor(i * t / segment_num)
+        boundaries.append(boundary)
+
+    boundaries = sorted(set(boundaries))
+    if len(boundaries) == 0 or boundaries[-1] != t:
+        boundaries.append(t)
+    if boundaries[0] != 0:
+        boundaries.insert(0, 0)
+    return boundaries
+
+
+def uniform_segment_size(features, segment_size):
+    """
+    按固定帧数将输入序列划分为多个段，每段包含 size 帧.
+
+    参数:
+        features: torch.Tensor, 形状 (t, d)
+        size: int, 每个段的帧数
+
+    返回:
+        boundaries: list, 分段边界索引列表（最后一个元素为 t）
+    """
+    t = features.shape[0]
+    if t == 1:
+        return [0]
+    if segment_size <= 0:
+        raise ValueError("size 必须为正整数")
+
+    # 从 size 开始，每隔 size 个帧划分一次
+    boundaries = list(range(segment_size, t, segment_size))
+    if len(boundaries) == 0 or boundaries[-1] != t:
+        boundaries.append(t)
+    if boundaries[0] != 0:
+        boundaries.insert(0, 0)
+    return boundaries
