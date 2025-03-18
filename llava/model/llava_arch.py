@@ -398,6 +398,8 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 print(f"Encoded features shape : {len(vision_tower_output)}")
                 encoded_features = vision_tower_output[0]
                 map_output = vision_tower_output[1]
+                if torch.isnan(map_output).any():
+                    print("Nan detected in map_output")
 
                 # encoded_features = encoded_features.requires_grad_()
                 # print(
