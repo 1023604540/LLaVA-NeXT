@@ -146,14 +146,14 @@ class MultimodalOpsMixin:
                 long_memory_compressed = long_memory[:0]
             else:
                 long_memory_compressed, weight, step_long_indices = compress_fn(long_memory, video_long_memory_length)
-
+                print(weight)
                 sorted_indices = torch.argsort(weight, descending=True)
                 key_centroids = long_memory[sorted_indices]
                 key_length = 32
                 if key_centroids.shape[0] > key_length:
                     key_centroids = key_centroids[:key_length]
                 dists = ((long_memory.unsqueeze(1) - key_centroids.unsqueeze(0)) ** 2).sum(dim=3).sum(dim=2).sqrt()
-                min_indices = torch.argmin(dists, dim=0).sort()
+                min_indices = torch.argmin(dists, dim=0)
                 print(f"Min indices: {min_indices}")
                 key_memory = img_feature[min_indices]
                 cur_memory = torch.cat([key_memory, cur_memory], dim=0)
