@@ -130,7 +130,7 @@ def kmeans_feature(img_feature, video_max_frames, img_similarity=None):
 def weighted_kmeans_feature(img_feature, video_max_frames, weights=None):
     if weights is None:
         weights = torch.ones(img_feature.size(0), dtype=img_feature.dtype, device=img_feature.device)
-    def weighted_kmeans_torch(X, num_clusters, weights=None, distance='euclidean', tol=1e-5, max_iter=50):
+    def weighted_kmeans_torch(X, num_clusters, weights=None, distance='euclidean', tol=1e-6, max_iter=50):
         #indices = torch.randperm(X.size(0), device=X.device)[:num_clusters]
         indices = torch.linspace(0, X.size(0) - 1, steps=num_clusters).long().to(X.device)
         print(f"initial indices: {indices}")
@@ -153,6 +153,7 @@ def weighted_kmeans_feature(img_feature, video_max_frames, weights=None):
             if mask.sum() < num_clusters:  # fix nan centroids
                 new_centroids[~mask] = torch.stack([X[random.randint(0, X.size(0) - 1)] for _ in range(num_clusters - mask.sum())])
             diff = torch.norm(centroids - new_centroids, dim=1).sum()
+            print(f"step {i}, diff={diff}")
             if diff < tol:
                 print(f"exit at step {i}")
                 break
