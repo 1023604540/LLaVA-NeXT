@@ -153,7 +153,7 @@ class MultimodalOpsMixin:
                 if key_centroids.shape[0] > key_length:
                     key_centroids = key_centroids[:key_length]
                 print(f"long_memory.shape = {long_memory.shape}, key_centroids.shape = {key_centroids.shape}")
-                dists = ((long_memory.unsqueeze(1) - key_centroids.unsqueeze(0)) ** 2).float()
+                dists = ((long_memory.unsqueeze(1) - key_centroids.unsqueeze(0)) ** 2)
                 print(f"Dists: {dists.shape}")
                 dists = dists.sum(dim=3).sum(dim=2).sqrt()
                 print(f"Dists: {dists.shape}")
