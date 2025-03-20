@@ -372,35 +372,36 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     non_video_positions.append(idx)
                     continue
                 #boundaries = adjusted_segment(image.mean(dim=1).flatten(1,2))
-                boundaries = uniform_segment_num(image.mean(dim=1).flatten(1,2), 5)
+                #boundaries = uniform_segment_num(image.mean(dim=1).flatten(1,2), 5)
                 #print(f"boundaries:{len(boundaries)}")
-                print(f"boundaries:{boundaries}")
+                #print(f"boundaries:{boundaries}")
 
-                segment_memory = []
+                #segment_memory = []
                 encoded_features = self.encode_images(image)
-                encoded_features = encoded_features.requires_grad_()
+                #encoded_features = encoded_features.requires_grad_()
                 # print(
                 #     f"[DEBUG] Vision output requires_grad={encoded_features.requires_grad}, grad_fn={encoded_features.grad_fn}")
                 # torch.cuda.synchronize()
                 # print("Before attention_model forward pass")
-                semantic_memory = self.compress_global_features(encoded_features)
-                image_segments = [encoded_features[boundaries[i]:boundaries[i+1]] for i in range(len(boundaries) - 1)]
-                for image_segment in image_segments:
-                    print(f"Image segment shape : {image_segment.shape}")
-                    #print(f"Encoded segment shape : {encoded_segment.shape}")
-                    segment_memory += (self.compress_temporal_features([image_segment], video_idx_in_batch, all_video=True))
-                segment_memory.append(semantic_memory)
+                #semantic_memory = self.compress_global_features(encoded_features)
+                #image_segments = [encoded_features[boundaries[i]:boundaries[i+1]] for i in range(len(boundaries) - 1)]
+                #for image_segment in image_segments:
+                    #print(f"Image segment shape : {image_segment.shape}")
+                    ##print(f"Encoded segment shape : {encoded_segment.shape}")
+                    #segment_memory += (self.compress_temporal_features([image_segment], video_idx_in_batch, all_video=True))
+                #segment_memory.append(semantic_memory)
 
-                memory_feature = torch.cat(segment_memory, dim=0)
-                mem_shape = memory_feature.shape
-                memory_feature = memory_feature.view(-1, mem_shape[-1])  # Flatten (frames*729, 1152)
-                memory_feature = self.get_model().memory_mlp(memory_feature)  # MLP with GELU activation
-                memory_feature = memory_feature.view(*mem_shape)  # Reshape back to (frames, 729, 1152)
-                rank0_print(f"cat_segment_memory shape : {memory_feature.shape}")
+                # memory_feature = torch.cat(segment_memory, dim=0)
+                # mem_shape = memory_feature.shape
+                # memory_feature = memory_feature.view(-1, mem_shape[-1])  # Flatten (frames*729, 1152)
+                # memory_feature = self.get_model().memory_mlp(memory_feature)  # MLP with GELU activation
+                # memory_feature = memory_feature.view(*mem_shape)  # Reshape back to (frames, 729, 1152)
+                # rank0_print(f"cat_segment_memory shape : {memory_feature.shape}")
                 # if torch.isnan(memory_feature).any():
                 #     raise ValueError("NaNs detected in attention_model output!")
                 # rank0_print(
                 #     f"[attention_model] output requires_grad={cat_segment_memory.requires_grad}, grad_fn={cat_segment_memory.grad_fn}")
+                memory_feature = self.compress_temporal_features(encoded_features, video_idx_in_batch, all_video=True)
                 images_list[idx] = memory_feature
 
             # Now process all non-video images together.

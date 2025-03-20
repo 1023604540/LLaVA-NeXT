@@ -104,7 +104,7 @@ class MultimodalOpsMixin:
         This method depends on configuration parameters such as:
             video_long_memory_length, video_Turing_memory_length, etc.
         """
-        video_long_memory_length = getattr(self.config, "video_long_memory_length", 3)
+        video_long_memory_length = getattr(self.config, "video_long_memory_length", 32)
         video_current_memory_length = getattr(self.config, "video_current_memory_length", 0)
         compress_long_memory_size = getattr(self.config, "compress_long_memory_size", 27)
         video_sample_type = getattr(self.config, "video_sample_type", "weighted_kmeans")
@@ -149,7 +149,7 @@ class MultimodalOpsMixin:
 
                 sorted_indices = torch.argsort(weight, descending=True)
                 key_centroids = long_memory[sorted_indices]
-                key_length = 3
+                key_length = 32
                 if key_centroids.shape[0] > key_length:
                     key_centroids = key_centroids[:key_length]
                 dists = ((long_memory.unsqueeze(1) - key_centroids.unsqueeze(0)) ** 2).sum(dim=3).sum(dim=2).sqrt()
@@ -164,7 +164,8 @@ class MultimodalOpsMixin:
                 cur_memory.view(-1, 729, 1152),
             ], dim=0)
             new_image_features.append(memory_feature)
-        return new_image_features
+
+        return cur_memory
 
     def compress_global_features(self, image_features):
         """
