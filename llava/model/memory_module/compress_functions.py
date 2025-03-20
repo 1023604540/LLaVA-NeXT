@@ -155,7 +155,6 @@ def weighted_kmeans_feature(img_feature, video_max_frames, weights=None):
             diff = torch.norm(centroids - new_centroids, dim=1).sum()
             print(f"step {i}, diff={diff}")
             if diff < tol:
-                print(f"exit at step {i}")
                 break
             centroids = new_centroids
         return centroids, labels, weights_sum, i
@@ -164,6 +163,7 @@ def weighted_kmeans_feature(img_feature, video_max_frames, weights=None):
     if T <= T0:
         return img_feature, weights, [[[i] for i in range(T)]]
     X = img_feature.contiguous().view(T, -1)  # [T, P, D]
+    print(f"X shape: {X.shape}")
     centroids, labels, weights, exit_step = weighted_kmeans_torch(X, T0, weights)
     reduced_feature = centroids.view(T0, P, D)
     # print(f'Note: perform weighted kmeans feature {img_feature.shape} to {reduced_feature.shape}, exit at step={exit_step}')  # actually, K=T0
