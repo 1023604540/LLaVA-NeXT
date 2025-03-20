@@ -148,7 +148,7 @@ class MultimodalOpsMixin:
                 long_memory_compressed, weight, step_long_indices = compress_fn(long_memory, video_long_memory_length)
                 print(f"Weight: {weight}")
                 sorted_indices = torch.argsort(weight, descending=True)
-                key_centroids = long_memory[sorted_indices]
+                key_centroids = long_memory_compressed[sorted_indices]
                 key_length = 32
                 if key_centroids.shape[0] > key_length:
                     key_centroids = key_centroids[:key_length]
