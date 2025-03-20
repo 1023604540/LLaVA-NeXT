@@ -138,6 +138,7 @@ def weighted_kmeans_feature(img_feature, video_max_frames, weights=None):
         for i in range(max_iter):
             if distance == 'euclidean':
                 dists = ((X.unsqueeze(1) - centroids.unsqueeze(0)) ** 2).sum(dim=2).sqrt()
+                print(f"X.unsqueeze(1).shape = {X.unsqueeze(1).shape}, centroids.unsqueeze(0).shape = {centroids.unsqueeze(0).shape}")
                 print(f"step {i}, dists shape: {dists.shape}, dists: {dists}")
             else:
                 raise NotImplementedError("Only Euclidean distance is supported yet")
@@ -163,7 +164,7 @@ def weighted_kmeans_feature(img_feature, video_max_frames, weights=None):
     T0 = video_max_frames
     if T <= T0:
         return img_feature, weights, [[[i] for i in range(T)]]
-    X = img_feature.contiguous().view(T, -1)  # [T, P, D]
+    X = img_feature.contiguous().view(T, -1).float()  # [T, P, D]
     print(f"X shape: {X.shape}")
     centroids, labels, weights, exit_step = weighted_kmeans_torch(X, T0, weights)
     reduced_feature = centroids.view(T0, P, D)
