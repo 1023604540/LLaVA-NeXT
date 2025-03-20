@@ -159,7 +159,7 @@ def weighted_kmeans_feature(img_feature, video_max_frames, weights=None):
     T0 = video_max_frames
     if T <= T0:
         return img_feature, weights, [[[i] for i in range(T)]]
-    X = img_feature.contiguous().view(T, -1)  # [T, P, D]
+    X = img_feature.contiguous().view(T, -1).float()  # [T, P, D] Use Float to avoid overflow
     centroids, labels, weights, exit_step = weighted_kmeans_torch(X, T0, weights)
     reduced_feature = centroids.view(T0, P, D)
     # print(f'Note: perform weighted kmeans feature {img_feature.shape} to {reduced_feature.shape}, exit at step={exit_step}')  # actually, K=T0
