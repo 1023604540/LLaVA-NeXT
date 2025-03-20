@@ -130,8 +130,10 @@ def kmeans_feature(img_feature, video_max_frames, img_similarity=None):
 def weighted_kmeans_feature(img_feature, video_max_frames, weights=None):
     if weights is None:
         weights = torch.ones(img_feature.size(0), dtype=img_feature.dtype, device=img_feature.device)
-    def weighted_kmeans_torch(X, num_clusters, weights=None, distance='euclidean', tol=1e-4, max_iter=10):
-        indices = torch.randperm(X.size(0), device=X.device)[:num_clusters]
+    def weighted_kmeans_torch(X, num_clusters, weights=None, distance='euclidean', tol=1e-4, max_iter=50):
+        #indices = torch.randperm(X.size(0), device=X.device)[:num_clusters]
+        indices = torch.linspace(0, X.size(0) - 1, steps=num_clusters).long().to(X.device)
+        print(f"initial indices: {indices}")
         centroids = X[indices]
         for i in range(max_iter):
             if distance == 'euclidean':
@@ -152,6 +154,7 @@ def weighted_kmeans_feature(img_feature, video_max_frames, weights=None):
                 new_centroids[~mask] = torch.stack([X[random.randint(0, X.size(0) - 1)] for _ in range(num_clusters - mask.sum())])
             diff = torch.norm(centroids - new_centroids, dim=1).sum()
             if diff < tol:
+                print(f"exit at step {i}")
                 break
             centroids = new_centroids
         return centroids, labels, weights_sum, i
