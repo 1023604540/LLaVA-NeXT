@@ -138,6 +138,7 @@ def weighted_kmeans_feature(img_feature, video_max_frames, weights=None):
         for i in range(max_iter):
             if distance == 'euclidean':
                 dists = ((X.unsqueeze(1) - centroids.unsqueeze(0)) ** 2).sum(dim=2).sqrt()
+                print(f"step {i}, dists shape: {dists.shape}, dists: {dists}")
             else:
                 raise NotImplementedError("Only Euclidean distance is supported yet")
             labels = torch.argmin(dists, dim=1)
