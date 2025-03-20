@@ -29,7 +29,7 @@ from transformers.modeling_utils import PreTrainedModel
 from transformers import PretrainedConfig
 from transformers.utils import ModelOutput
 from llava.utils import rank0_print
-
+from transformers import AutoTokenizer
 
 class SigLipImageProcessor:
     def __init__(self, image_mean=(0.5, 0.5, 0.5), image_std=(0.5, 0.5, 0.5), size=(384, 384), crop_size: Dict[str, int] = None, resample=PILImageResampling.BICUBIC, rescale_factor=1 / 255, data_format=ChannelDimension.FIRST):
@@ -66,6 +66,40 @@ class SigLipImageProcessor:
 
         return BatchFeature(data=data, tensor_type=return_tensors)
 
+class SiglipTextConfig(PretrainedConfig):
+    model_type = "siglip_text_model"
+
+    def __init__(
+        self,
+        vocab_size=32000,
+        hidden_size=1152,
+        intermediate_size=4304,
+        num_hidden_layers=27,
+        num_attention_heads=16,
+        max_position_embeddings=64,
+        hidden_act="gelu_pytorch_tanh",
+        layer_norm_eps=1e-6,
+        attention_dropout=0.0,
+        # This differs from `CLIPTokenizer`'s default and from openai/siglip
+        # See https://github.com/huggingface/transformers/pull/24773#issuecomment-1632287538
+        pad_token_id=1,
+        bos_token_id=49406,
+        eos_token_id=49407,
+        projection_size=None,
+        **kwargs,
+    ):
+        super().__init__(pad_token_id=pad_token_id, bos_token_id=bos_token_id, eos_token_id=eos_token_id, **kwargs)
+
+        self.vocab_size = vocab_size
+        self.hidden_size = hidden_size
+        self.intermediate_size = intermediate_size
+        self.num_hidden_layers = num_hidden_layers
+        self.num_attention_heads = num_attention_heads
+        self.max_position_embeddings = max_position_embeddings
+        self.layer_norm_eps = layer_norm_eps
+        self.hidden_act = hidden_act
+        self.attention_dropout = attention_dropout
+        self.projection_size = projection_size if projection_size is not None else hidden_size
 
 class SigLipVisionConfig(PretrainedConfig):
     model_type = "siglip_vision_model"
@@ -173,6 +207,45 @@ class SigLipVisionEmbeddings(nn.Module):
         embeddings = embeddings + self.position_embedding(self.position_ids)
         return embeddings
 
+
+class SiglipTextEmbeddings(nn.Module):
+    def __init__(self, config: SiglipTextConfig):
+        super().__init__()
+        embed_dim = config.hidden_size
+
+        self.token_embedding = nn.Embedding(config.vocab_size, embed_dim)
+        self.position_embedding = nn.Embedding(config.max_position_embeddings, embed_dim)
+
+        # position_ids (1, len position emb) is contiguous in memory and exported when serialized
+        self.register_buffer(
+            "position_ids", torch.arange(config.max_position_embeddings).expand((1, -1)), persistent=False
+        )
+
+    def forward(
+        self,
+        input_ids: Optional[torch.LongTensor] = None,
+        position_ids: Optional[torch.LongTensor] = None,
+        inputs_embeds: Optional[torch.FloatTensor] = None,
+    ) -> torch.Tensor:
+        seq_length = input_ids.shape[-1] if input_ids is not None else inputs_embeds.shape[-2]
+        max_position_embedding = self.position_embedding.weight.shape[0]
+
+        if seq_length > max_position_embedding:
+            raise ValueError(
+                f"Sequence length must be less than max_position_embeddings (got `sequence length`: "
+                f"{seq_length} and max_position_embeddings: {max_position_embedding}"
+            )
+
+        if position_ids is None:
+            position_ids = self.position_ids[:, :seq_length]
+
+        if inputs_embeds is None:
+            inputs_embeds = self.token_embedding(input_ids)
+
+        position_embeddings = self.position_embedding(position_ids)
+        embeddings = inputs_embeds + position_embeddings
+
+        return embeddings
 
 class SigLipAttention(nn.Module):
     """Multi-headed attention from 'Attention Is All You Need' paper"""
@@ -456,6 +529,77 @@ class SigLipVisionTransformer(nn.Module):
         )
 
 
+class SiglipTextTransformer(nn.Module):
+    def __init__(self, config: SiglipTextConfig):
+        super().__init__()
+        self.config = config
+        embed_dim = config.hidden_size
+        self.embeddings = SiglipTextEmbeddings(config)
+        self.encoder = SiglipEncoder(config)
+        self.final_layer_norm = nn.LayerNorm(embed_dim, eps=config.layer_norm_eps)
+
+        self.head = nn.Linear(embed_dim, config.projection_size)
+        self._use_flash_attention_2 = config._attn_implementation == "flash_attention_2"
+
+
+    def forward(
+        self,
+        input_ids: Optional[torch.Tensor] = None,
+        attention_mask: Optional[torch.Tensor] = None,
+        position_ids: Optional[torch.Tensor] = None,
+        output_attentions: Optional[bool] = None,
+        output_hidden_states: Optional[bool] = None,
+        return_dict: Optional[bool] = None,
+    ) -> Union[Tuple, BaseModelOutputWithPooling]:
+        r"""
+        Returns:
+
+        """
+        output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
+        output_hidden_states = (
+            output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
+        )
+        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+
+        if input_ids is None:
+            raise ValueError("You have to specify input_ids")
+
+        input_shape = input_ids.size()
+        input_ids = input_ids.view(-1, input_shape[-1])
+
+        hidden_states = self.embeddings(input_ids=input_ids, position_ids=position_ids)
+
+        # note: SigLIP's text model does not use a causal mask, unlike the original CLIP model.
+        # expand attention_mask
+        if attention_mask is not None and not self._use_flash_attention_2:
+            # [batch_size, seq_len] -> [batch_size, 1, tgt_seq_len, src_seq_len]
+            attention_mask = _prepare_4d_attention_mask(attention_mask, hidden_states.dtype)
+
+        encoder_outputs = self.encoder(
+            inputs_embeds=hidden_states,
+            attention_mask=attention_mask,
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states,
+            return_dict=return_dict,
+        )
+
+        last_hidden_state = encoder_outputs[0]
+        last_hidden_state = self.final_layer_norm(last_hidden_state)
+
+        # Assuming "sticky" EOS tokenization, last token is always EOS.
+        pooled_output = last_hidden_state[:, -1, :]
+        pooled_output = self.head(pooled_output)
+
+        if not return_dict:
+            return (last_hidden_state, pooled_output) + encoder_outputs[1:]
+
+        return BaseModelOutputWithPooling(
+            last_hidden_state=last_hidden_state,
+            pooler_output=pooled_output,
+            hidden_states=encoder_outputs.hidden_states,
+            attentions=encoder_outputs.attentions,
+        )
+
 class SigLipMultiheadAttentionPoolingHead(nn.Module):
     """Multihead Attention Pooling."""
 
@@ -490,6 +634,7 @@ class SigLipVisionModel(SigLipPreTrainedModel):
         super().__init__(config)
 
         self.vision_model = SigLipVisionTransformer(config)
+
 
         # Initialize weights and apply final processing
         self.post_init()
@@ -535,6 +680,58 @@ class SigLipVisionModel(SigLipPreTrainedModel):
             return_dict=return_dict,
         )
 
+class SiglipTextModel(SiglipPreTrainedModel):
+    config_class = SiglipTextConfig
+
+    def __init__(self, config: SiglipTextConfig):
+        super().__init__(config)
+        self.text_model = SiglipTextTransformer(config)
+        # Initialize weights and apply final processing
+        self.post_init()
+
+    def get_input_embeddings(self) -> nn.Module:
+        return self.text_model.embeddings.token_embedding
+
+    def set_input_embeddings(self, value):
+        self.text_model.embeddings.token_embedding = value
+
+    def forward(
+        self,
+        input_ids: Optional[torch.Tensor] = None,
+        attention_mask: Optional[torch.Tensor] = None,
+        position_ids: Optional[torch.Tensor] = None,
+        output_attentions: Optional[bool] = None,
+        output_hidden_states: Optional[bool] = None,
+        return_dict: Optional[bool] = None,
+    ) -> Union[Tuple, BaseModelOutputWithPooling]:
+        r"""
+        Returns:
+
+        Examples:
+
+        ```python
+        >>> from transformers import AutoTokenizer, SiglipTextModel
+
+        >>> model = SiglipTextModel.from_pretrained("google/siglip-base-patch16-224")
+        >>> tokenizer = AutoTokenizer.from_pretrained("google/siglip-base-patch16-224")
+
+        >>> # important: make sure to set padding="max_length" as that's how the model was trained
+        >>> inputs = tokenizer(["a photo of a cat", "a photo of a dog"], padding="max_length", return_tensors="pt")
+
+        >>> outputs = model(**inputs)
+        >>> last_hidden_state = outputs.last_hidden_state
+        >>> pooled_output = outputs.pooler_output  # pooled (EOS token) states
+        ```"""
+        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+
+        return self.text_model(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            position_ids=position_ids,
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states,
+            return_dict=return_dict,
+        )
 
 class SigLipVisionTower(nn.Module):
     def __init__(self, vision_tower, vision_tower_cfg, delay_load=False):
@@ -567,6 +764,7 @@ class SigLipVisionTower(nn.Module):
             return
 
         self.vision_tower = SigLipVisionModel.from_pretrained(self.vision_tower_name, device_map=device_map)
+        self.vision_text = SiglipTextModel.from_pretrained(self.vision_tower_name, device_map=device_map)
 
         del self.vision_tower.vision_model.encoder.layers[-1:]
         # self.vision_tower.vision_model.head = nn.Identity()
@@ -575,7 +773,7 @@ class SigLipVisionTower(nn.Module):
 
         self.is_loaded = True
 
-    def forward(self, images):
+    def forward(self, images, text):
         if type(images) is list:
             image_features = []
             for image in images:
@@ -591,7 +789,14 @@ class SigLipVisionTower(nn.Module):
             image_features = [image_forward_outs.hidden_states[-1].to(images.dtype),image_forward_outs.pooler_output.to(images.dtype)]
             assert image_features[0].shape[-2] == 729
 
-        return image_features
+        if text is not None:
+            tokenizer = AutoTokenizer.from_pretrained("google/siglip-base-patch16-224")
+            text_inputs = tokenizer(text, padding="max_length",
+                               return_tensors="pt")
+            text_forward_out = self.vision_text(**text_inputs.to(device=self.device, dtype=self.dtype), output_hidden_states=True)
+            last_hidden_state = text_forward_out.last_hidden_state
+            pooled_output = text_forward_out.pooler_output
+        return image_features, last_hidden_state
 
 
 
