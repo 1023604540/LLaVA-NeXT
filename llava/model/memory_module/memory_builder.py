@@ -159,7 +159,7 @@ class MultimodalOpsMixin:
                 print(f"Dists: {dists.shape}")
                 print(f"Dists: {dists[0]}")
                 print(f"Dists: {dists[127]}")
-                min_indices = torch.argmin(dists, dim=1)
+                min_indices = torch.argmin(dists, dim=0)
                 min_indices_sorted, _ = torch.sort(min_indices)
                 print(f"Min indices: {min_indices}")
                 print(f"Min indices sorted: {min_indices_sorted}")
