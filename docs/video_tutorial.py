@@ -118,7 +118,7 @@ def dynamic_load_video(video_path):
 
 print("load video")
 # Load and process video
-video_path = "/home/hpc/b232dd/b232dd16/LLaVA-OV/docs/needle_32.mp4"
+video_path = "/home/hpc/b232dd/b232dd16/LLaVA-OV/docs/jobs.mp4"
 # video_frames = load_video(video_path, 32)
 video_frames = load_video(video_path, 128)
 print(video_frames.shape) # (16, 1024, 576, 3)
