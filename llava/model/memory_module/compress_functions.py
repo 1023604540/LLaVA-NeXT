@@ -131,8 +131,8 @@ def weighted_kmeans_feature(img_feature, video_max_frames, weights=None):
     if weights is None:
         weights = torch.ones(img_feature.size(0), dtype=img_feature.dtype, device=img_feature.device)
     def weighted_kmeans_torch(X, num_clusters, weights=None, distance='euclidean', tol=1e-6, max_iter=50):
-        indices = torch.randperm(X.size(0), device=X.device)[:num_clusters]
-        #indices = torch.linspace(0, X.size(0) - 1, steps=num_clusters).long().to(X.device)
+        #indices = torch.randperm(X.size(0), device=X.device)[:num_clusters]
+        indices = torch.linspace(0, X.size(0) - 1, steps=num_clusters).long().to(X.device)
         print(f"initial indices: {indices}")
         centroids = X[indices]
         for i in range(max_iter):
