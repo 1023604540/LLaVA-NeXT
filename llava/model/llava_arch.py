@@ -402,7 +402,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 # rank0_print(
                 #     f"[attention_model] output requires_grad={cat_segment_memory.requires_grad}, grad_fn={cat_segment_memory.grad_fn}")
                 print(f"Encoded features shape : {encoded_features.shape}")
-                memory_feature = self.compress_temporal_features(encoded_features, video_idx_in_batch, all_video=True)
+                memory_feature = self.compress_temporal_features([encoded_features], video_idx_in_batch, all_video=True)
                 images_list[idx] = memory_feature
 
             # Now process all non-video images together.
