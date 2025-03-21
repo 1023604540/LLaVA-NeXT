@@ -805,6 +805,8 @@ class SigLipVisionTower(nn.Module):
             last_hidden_state = text_forward_out.last_hidden_state
             pooled_output = text_forward_out.pooler_output
             text_output = [last_hidden_state, pooled_output]
+        print(next(self.vision_tower.parameters()).dtype)
+        print(next(self.vision_text.parameters()).dtype)
         return image_features, text_output
 
 
