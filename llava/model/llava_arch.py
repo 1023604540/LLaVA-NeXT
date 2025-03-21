@@ -396,8 +396,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     encoded_features = torch.cat(seperate_video, dim=0)
                 else:
                     vision_tower_output, text_hidden_state = self.encode_images(image,["A Car"])
-                    print(f"Encoded features shape : {len(vision_tower_output)}")
-                print(f"Encoded features shape : {len(vision_tower_output)}")
+                    print(f"vision_tower_output : {len(vision_tower_output)}, text_hidden_state : {len(text_hidden_state)}")
                 encoded_features = vision_tower_output[0]
                 print(f"Encoded features shape : {encoded_features.shape}")
                 map_output = vision_tower_output[1]
