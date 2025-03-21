@@ -408,7 +408,8 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 if torch.isnan(map_output).any():
                     print("Nan detected in map_output")
                 # calculate similarity between image feature and text feature
-                similarity = torch.matmul(map_output, text_pooled_output.T)
+                pooled_vision_feature = torch.mean(encoded_features, dim=1).squeeze(1)
+                similarity = torch.matmul(pooled_vision_feature, text_pooled_output.T)
                 print (f"Similarity score : {similarity}")
 
 
