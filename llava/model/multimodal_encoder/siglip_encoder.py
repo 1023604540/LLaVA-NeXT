@@ -682,6 +682,7 @@ class SigLipVisionModel(SigLipPreTrainedModel):
 
 class SiglipTextModel(SigLipPreTrainedModel):
     config_class = SiglipTextConfig
+    _no_split_modules = ["SigLipEncoderLayer"]
 
     def __init__(self, config: SiglipTextConfig):
         super().__init__(config)
