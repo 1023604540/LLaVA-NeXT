@@ -765,7 +765,8 @@ class SigLipVisionTower(nn.Module):
             return
 
         self.vision_tower = SigLipVisionModel.from_pretrained(self.vision_tower_name, device_map=device_map)
-        self.vision_text = SiglipTextModel.from_pretrained(self.vision_tower_name, device_map=device_map)
+        #self.vision_text = SiglipTextModel.from_pretrained(self.vision_tower_name, device_map=device_map)
+        self.vision_text = SiglipTextModel.from_pretrained("google/siglip-base-patch16-224", device_map=device_map)
 
         del self.vision_tower.vision_model.encoder.layers[-1:]
         # self.vision_tower.vision_model.head = nn.Identity()
