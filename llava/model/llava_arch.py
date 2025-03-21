@@ -643,7 +643,8 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     cur_image_idx += 1
                     cur_new_input_embeds.append(cur_image_features)
                     cur_new_labels.append(torch.full((cur_image_features.shape[0],), IGNORE_INDEX, device=cur_labels.device, dtype=cur_labels.dtype))
-
+            for x in cur_new_input_embeds:
+                print(f"Cur new input embeds shape : {x.shape}")
             # Move to GPU and Concatenate
             cur_new_input_embeds = [x.to(self.device) for x in cur_new_input_embeds]
 
