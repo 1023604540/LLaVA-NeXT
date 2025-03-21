@@ -95,7 +95,6 @@ class LlavaQwenForCausalLM(Qwen2ForCausalLM, LlavaMetaForCausalLM):
         )
         hidden_states = outputs.hidden_states
         print("中间层倒数第二层输出：", hidden_states[-2].shape)
-        print(hidden_states[-2])
 
 
         if dpo_forward:
