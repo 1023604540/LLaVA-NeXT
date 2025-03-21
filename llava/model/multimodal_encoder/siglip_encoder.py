@@ -800,10 +800,9 @@ class SigLipVisionTower(nn.Module):
         if text is not None:
             tokenizer = AutoTokenizer.from_pretrained("google/siglip-so400m-patch14-384")
             text_inputs = tokenizer(text, padding="max_length",
-                               return_tensors="pt")
+                               return_tensors="pt",return_attention_mask=True)
+            print("attention_mask:", text_inputs["attention_mask"])
             text_forward_out = self.vision_text(**text_inputs.to(device=self.device), output_hidden_states=True)
-            if torch.isnan(text_forward_out).any():
-                print("Nan detected in text_forward_out")
             last_hidden_state = text_forward_out.last_hidden_state
             pooled_output = text_forward_out.pooler_output
             text_output = [last_hidden_state, pooled_output]
