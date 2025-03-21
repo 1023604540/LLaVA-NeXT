@@ -155,6 +155,7 @@ layer_to_hook = -2  # second-to-last layer as an example
 def hidden_state_hook(module, input, output):
     print("Hook triggered")
     modified_output = modify_hidden_state(output[0])
+    hook_handle.remove()
     return (modified_output,) + output[1:]
 
 # Register the hook before inference/generation
@@ -179,4 +180,4 @@ cont = model.generate(
 text_outputs = tokenizer.batch_decode(cont, skip_special_tokens=True)
 print(text_outputs[0])
 
-hook_handle.remove()
+
