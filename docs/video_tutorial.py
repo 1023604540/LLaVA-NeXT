@@ -160,8 +160,7 @@ def hidden_state_hook(module, input, output):
 # Register the hook before inference/generation
 hook_handle = model.model.layers[layer_to_hook].register_forward_hook(hidden_state_hook)
 
-# Cleanup: Remove the hook after you're done
-hook_handle.remove()
+
 
 
 
@@ -180,3 +179,4 @@ cont = model.generate(
 text_outputs = tokenizer.batch_decode(cont, skip_special_tokens=True)
 print(text_outputs[0])
 
+hook_handle.remove()
