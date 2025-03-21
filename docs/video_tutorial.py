@@ -171,6 +171,7 @@ image_sizes = [frame.size for frame in video_frames]  # (width * height * 3)
 # Your custom hidden-state modification
 def modify_hidden_state(hidden_states):
     # For instance: scale hidden states or add noise
+    print(hidden_states.shape)
     return hidden_states * 1  # Example scaling
 
 # Choose the layer you want to hook into
