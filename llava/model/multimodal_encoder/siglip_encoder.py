@@ -535,7 +535,7 @@ class SiglipTextTransformer(nn.Module):
         self.config = config
         embed_dim = config.hidden_size
         self.embeddings = SiglipTextEmbeddings(config)
-        self.encoder = SiglipEncoder(config)
+        self.encoder = SigLipEncoder(config)
         self.final_layer_norm = nn.LayerNorm(embed_dim, eps=config.layer_norm_eps)
 
         self.head = nn.Linear(embed_dim, config.projection_size)
@@ -680,7 +680,7 @@ class SigLipVisionModel(SigLipPreTrainedModel):
             return_dict=return_dict,
         )
 
-class SiglipTextModel(SiglipPreTrainedModel):
+class SiglipTextModel(SigLipPreTrainedModel):
     config_class = SiglipTextConfig
 
     def __init__(self, config: SiglipTextConfig):
