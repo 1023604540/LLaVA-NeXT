@@ -766,7 +766,7 @@ class SigLipVisionTower(nn.Module):
 
         self.vision_tower = SigLipVisionModel.from_pretrained(self.vision_tower_name, device_map=device_map)
         #self.vision_text = SiglipTextModel.from_pretrained(self.vision_tower_name, device_map=device_map)
-        self.vision_text = SiglipTextModel.from_pretrained("google/siglip-base-patch16-224", device_map=device_map)
+        self.vision_text = SiglipTextModel.from_pretrained("google/siglip-so400m-patch14-384", device_map=device_map)
 
         del self.vision_tower.vision_model.encoder.layers[-1:]
         # self.vision_tower.vision_model.head = nn.Identity()
@@ -792,7 +792,7 @@ class SigLipVisionTower(nn.Module):
             assert image_features[0].shape[-2] == 729
 
         if text is not None:
-            tokenizer = AutoTokenizer.from_pretrained("google/siglip-base-patch16-224")
+            tokenizer = AutoTokenizer.from_pretrained("google/siglip-so400m-patch14-384")
             text_inputs = tokenizer(text, padding="max_length",
                                return_tensors="pt")
             text_forward_out = self.vision_text(**text_inputs.to(device=self.device), output_hidden_states=True)
