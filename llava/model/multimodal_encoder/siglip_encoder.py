@@ -771,7 +771,7 @@ class SigLipVisionTower(nn.Module):
         del self.vision_tower.vision_model.encoder.layers[-1:]
         # self.vision_tower.vision_model.head = nn.Identity()
         # print("vision_tower head is retained")
-        siglip_pretrained = SigLipVisionModel.from_pretrained(self.vision_tower_name, device_map=device_map)
+        siglip_pretrained = SigLipVisionModel.from_pretrained("google/siglip-so400m-patch14-384", device_map=device_map)
         self.vision_tower.vision_model.head.load_state_dict(siglip_pretrained.vision_model.head.state_dict())
 
         # Remove pretrained model from memory
