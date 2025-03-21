@@ -182,7 +182,7 @@ class MultimodalOpsMixin:
                 Turing_memory_compressed.view(-1, 729, 1152),   #（9，9*9，1152）（1，729，1152）
                 long_memory_compressed.view(-1, 729, 1152),
                 cur_memory.view(-1, 729, 1152),
-            ], dim=0)
+            ], dim=0).to(dtype=img_feature.dtype)
 
             mem_shape = memory_feature.shape  # e.g. (frames, 729, 1152)
             memory_feature = memory_feature.view(-1, mem_shape[-1])  # Flatten (frames*729, 1152)
