@@ -768,7 +768,7 @@ class SigLipVisionTower(nn.Module):
         self.vision_text = SiglipTextModel.from_pretrained(self.vision_tower_name, device_map=device_map)
 
         del self.vision_tower.vision_model.encoder.layers[-1:]
-        self.vision_tower.vision_model.head = nn.Identity()
+        # self.vision_tower.vision_model.head = nn.Identity()
         # print("vision_tower head is retained")
         self.vision_tower.requires_grad_(False)
 
