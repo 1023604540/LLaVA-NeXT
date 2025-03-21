@@ -420,51 +420,6 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
             projected_feature = self.get_model().mm_projector(torch.cat([image for image in images_list], dim=0))
             image_features = torch.split(projected_feature, split_sizes)
 
-
-
-            # for idx, image in enumerate(images_list):
-            #     # If it is not a video feature, we don't need to process it
-            #     if idx not in video_idx_in_batch:
-            #         continue
-            #     boundaries = segment(image.mean(dim=1).flatten(1,2), k=130)
-            #     print(f"boundaries:{len(boundaries)}")
-            #     selected_frames = [image[boundaries[i]] for i in range(len(boundaries) - 1)]
-            #     images_list[idx] = torch.stack(selected_frames, dim=0)
-
-
-            # concat_images = torch.cat([image for image in images_list], dim=0)  # torch.Size([frame_num, 3, 384, 384])
-            # rank_print(f"Concat images : {concat_images.shape}")
-            # split_sizes = [image.shape[0] for image in images_list]
-            # encoded_image_features = self.encode_images(concat_images)
-            # # image_features,all_faster_video_features = self.encode_multimodals(concat_images, video_idx_in_batch, split_sizes)
-            # # This is a list, each element is [num_images, patch * patch, dim]
-            # image_features = torch.split(encoded_image_features, split_sizes)  # [torch.Size([frame_num, 729, 3584])]
-            # rank_print(f"Encoded image feats : {[x.shape for x in image_features]}")
-            #
-            # # Sample maximal 32 frames as the original input
-            # sampled_image_features = []
-            # for image_feature in image_features:
-            #     sampled_image_features.append(image_feature[:32])
-            #     #sampled_image_features.append(self.uniform_sample_frames(image_feature, num_samples=32))
-            #
-            # ## Insert the hierarchical memory module here
-            #
-            # frame_memory = self.compress_temporal_features(image_features, video_idx_in_batch)
-            # rank_print(f"Frame memory : {[x.shape for x in frame_memory if x is not None]}")
-            #
-            # ## Concatenate memory module with original image features
-            # memory_features = [torch.cat((a, b), dim=0) if b is not None else a
-            #                   for a, b in zip(sampled_image_features, frame_memory)]
-            # rank_print(f"Image_feature + Frame memory : {[x.shape for x in memory_features]}")
-            #
-            # # Apply mm_projector
-            # concat_images = torch.cat([image for image in memory_features], dim=0)
-            # split_sizes = [image.shape[0] for image in memory_features]
-            # projected_features = self.get_model().mm_projector(concat_images)
-            # image_features = torch.split(projected_features, split_sizes)
-            # rank_print(f"Projected image feats : {[x.shape for x in image_features]}")
-
-
             new_image_features = []
             for idx, image_feat in enumerate(image_features):
                 if idx in video_idx_in_batch:
@@ -614,6 +569,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 raise ValueError(f"Unexpected mm_patch_merge_type: {self.config.mm_patch_merge_type}")
         else:
             image_features = self.encode_images(images)
+        print(f"Image features shape after processing: {[x.shape for x in image_features]}")
 
         # TODO: image start / end is not implemented here to support pretraining.
         if getattr(self.config, "tune_mm_mlp_adapter", False) and getattr(self.config, "mm_use_im_start_end", False):
@@ -657,7 +613,8 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 new_labels.append(labels[batch_idx])
                 cur_image_idx += 1
                 continue
-            # Adds -1 at the beginning and cur_input_ids.shape[0] at the end to mark start and end positions
+            # Adds -1 at the beginning and cur_input_ids.shape[0] at the end to mark start and end positions,
+            # returns indices (positions) where image tokens are located.
             image_token_indices = [-1] + torch.where(cur_input_ids == IMAGE_TOKEN_INDEX)[0].tolist() + [cur_input_ids.shape[0]]
 
             # Splits text and label sequences at positions where image tokens exist
@@ -671,6 +628,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
             # Embed the Text Tokens
             cur_input_embeds = self.get_model().embed_tokens(torch.cat(cur_input_ids_noim))
             cur_input_embeds_no_im = torch.split(cur_input_embeds, split_sizes, dim=0)
+            print(f"Cur input embeds shape : {cur_input_embeds_no_im[0].shape}")
             cur_new_input_embeds = []
             cur_new_labels = []
             # Insert Image Features into the Text Embeddings
