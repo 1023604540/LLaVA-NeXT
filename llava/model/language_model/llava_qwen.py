@@ -82,19 +82,19 @@ class LlavaQwenForCausalLM(Qwen2ForCausalLM, LlavaMetaForCausalLM):
         if inputs_embeds is None:
             (input_ids, position_ids, attention_mask, past_key_values, inputs_embeds, labels) = self.prepare_inputs_labels_for_multimodal(input_ids, position_ids, attention_mask, past_key_values, labels, images, modalities, image_sizes)
 
-        outputs = self.model(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            position_ids=position_ids,
-            past_key_values=past_key_values,
-            inputs_embeds=inputs_embeds,
-            use_cache=use_cache,
-            output_attentions=output_attentions,
-            output_hidden_states=True,  # 一定要设为True
-            return_dict=True,  # 保证是dict
-        )
-        hidden_states = outputs.hidden_states
-        print("中间层倒数第二层输出：", hidden_states[-2].shape)
+        # outputs = self.model(
+        #     input_ids=input_ids,
+        #     attention_mask=attention_mask,
+        #     position_ids=position_ids,
+        #     past_key_values=past_key_values,
+        #     inputs_embeds=inputs_embeds,
+        #     use_cache=use_cache,
+        #     output_attentions=output_attentions,
+        #     output_hidden_states=True,  # 一定要设为True
+        #     return_dict=True,  # 保证是dict
+        # )
+        # hidden_states = outputs.hidden_states
+        # print("中间层倒数第二层输出：", hidden_states[-2].shape)
 
 
         if dpo_forward:
