@@ -168,6 +168,29 @@ input_ids = tokenizer_image_token(prompt_question, tokenizer, IMAGE_TOKEN_INDEX,
 image_sizes = [frame.size for frame in video_frames]  # (width * height * 3)
 
 
+# Your custom hidden-state modification
+def modify_hidden_state(hidden_states):
+    # For instance: scale hidden states or add noise
+    return hidden_states * 1  # Example scaling
+
+# Choose the layer you want to hook into
+layer_to_hook = -2  # second-to-last layer as an example
+
+# Hook function
+def hidden_state_hook(module, input, output):
+    modified_output = modify_hidden_state(output[0])
+    return (modified_output,) + output[1:]
+
+# Register the hook before inference/generation
+hook_handle = model.model.layers[layer_to_hook].register_forward_hook(hidden_state_hook)
+
+# Cleanup: Remove the hook after you're done
+hook_handle.remove()
+
+
+
+
+
 # Generate response
 cont = model.generate(
     input_ids,

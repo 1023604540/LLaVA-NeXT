@@ -57,6 +57,7 @@ class LlavaQwenForCausalLM(Qwen2ForCausalLM, LlavaMetaForCausalLM):
         # Initialize weights and apply final processing
         self.post_init()
 
+
     def get_model(self):
         return self.model
 
