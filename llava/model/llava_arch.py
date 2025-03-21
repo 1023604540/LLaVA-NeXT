@@ -407,6 +407,12 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 print(f"text_pooled_output shape : {text_pooled_output.shape}") # torch.Size([1, 1152])
                 if torch.isnan(map_output).any():
                     print("Nan detected in map_output")
+                if torch.isnan(encoded_features).any():
+                    print("Nan detected in encoded_features")
+                if torch.isnan(text_hidden_state).any():
+                    print("Nan detected in text_hidden_state")
+                if torch.isnan(text_pooled_output).any():
+                    print("Nan detected in text_pooled_output")
                 # calculate similarity between image feature and text feature
                 pooled_vision_feature = torch.mean(encoded_features, dim=1).squeeze(1)
                 similarity = torch.matmul(pooled_vision_feature, text_pooled_output.T)
