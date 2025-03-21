@@ -652,6 +652,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
             cur_new_labels = torch.cat(cur_new_labels)
 
             new_input_embeds.append(cur_new_input_embeds)
+            print(f"Cur new input embeds shape : {cur_new_input_embeds.shape}")
             new_labels.append(cur_new_labels)
 
         # Truncate sequences to max length as image embeddings can make the sequence longer
