@@ -396,9 +396,12 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     encoded_features = torch.cat(seperate_video, dim=0)
                 else:
                     vision_tower_output = self.encode_images(image,["A Car"])
+                    print(f"Encoded features shape : {len(vision_tower_output)}")
                 print(f"Encoded features shape : {len(vision_tower_output)}")
                 encoded_features = vision_tower_output[0]
+                print(f"Encoded features shape : {encoded_features.shape}")
                 map_output = vision_tower_output[1]
+                print(f"Map output shape : {map_output.shape}")
                 if torch.isnan(map_output).any():
                     print("Nan detected in map_output")
 
