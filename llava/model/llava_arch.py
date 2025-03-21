@@ -398,15 +398,23 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     vision_tower_output, text_output = self.encode_images(image,["A Car"])
                     print(f"vision_tower_output : {len(vision_tower_output)}, text_hidden_state : {len(text_output)}")
                 encoded_features = vision_tower_output[0]
-                print(f"Encoded features shape : {encoded_features.shape}")
+                print(f"Encoded features shape : {encoded_features.shape}") #torch.Size([20, 729, 1152])
                 map_output = vision_tower_output[1]
-                print(f"Map output shape : {map_output.shape}")
+                print(f"Map output shape : {map_output.shape}") #torch.Size([20, 1152])
                 text_hidden_state = text_output[0]
                 text_pooled_output = text_output[1]
-                print(f"text_hidden_state shape : {text_hidden_state.shape}")
-                print(f"text_pooled_output shape : {text_pooled_output.shape}")
+                print(f"text_hidden_state shape : {text_hidden_state.shape}") # torch.Size([1, 64, 1152])
+                print(f"text_pooled_output shape : {text_pooled_output.shape}") # torch.Size([1, 1152])
                 if torch.isnan(map_output).any():
                     print("Nan detected in map_output")
+                # calculate similarity between image feature and text feature
+                similarity = torch.matmul(map_output, text_hidden_state.T)
+                print (f"Similarity score : {similarity}")
+
+
+
+
+
 
                 # encoded_features = encoded_features.requires_grad_()
                 # print(
@@ -457,7 +465,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
             projected_feature = self.get_model().mm_projector(torch.cat([image for image in images_list], dim=0))
             projected_map = self.get_model().mm_projector(map_output)
             if torch.isnan(projected_map).any():
-                print("Nan detected in projected_map")
+               print("Nan detected in projected_map")
             image_features = torch.split(projected_feature, split_sizes)
             rank_print(f"Encoded image feats : {[x.shape for x in image_features]}")  # [frame_num, 729, 3584]
 
