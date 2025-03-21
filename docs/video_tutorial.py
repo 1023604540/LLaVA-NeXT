@@ -154,6 +154,14 @@ layer_to_hook = -2  # second-to-last layer as an example
 # Hook function
 def hidden_state_hook(module, input, output):
     print("Hook triggered")
+    print("Hook output types and shapes:")
+    for i, o in enumerate(output):
+        if isinstance(o, torch.Tensor):
+            print(f"output[{i}]: shape={o.shape}")
+        elif isinstance(o, (list, tuple)):
+            print(f"output[{i}]: type={type(o)}, length={len(o)}")
+        else:
+            print(f"output[{i}]: {type(o)}")
     modified_output = modify_hidden_state(output[0])
     hook_handle.remove()
     return (modified_output,) + output[1:]
