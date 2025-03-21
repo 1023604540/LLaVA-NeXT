@@ -644,7 +644,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     cur_new_input_embeds.append(cur_image_features)
                     cur_new_labels.append(torch.full((cur_image_features.shape[0],), IGNORE_INDEX, device=cur_labels.device, dtype=cur_labels.dtype))
             for x in cur_new_input_embeds:
-                print(f"Cur new input embeds shape : {x.shape}")
+                print(f"Elements in Cur new input embeds shape : {x.shape}")
             # Move to GPU and Concatenate
             cur_new_input_embeds = [x.to(self.device) for x in cur_new_input_embeds]
 
@@ -677,6 +677,8 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
         attention_mask = torch.zeros((batch_size, max_len), dtype=attention_mask.dtype, device=attention_mask.device)
         position_ids = torch.zeros((batch_size, max_len), dtype=position_ids.dtype, device=position_ids.device)
         # rank_print("Prepare pos id")
+        # Takes sequences of different lengths and pads them to the same length (max_len in the batch).
+        # It also builds attention masks, position ids, and label tensors to match.
 
         for i, (cur_new_embed, cur_new_labels) in enumerate(zip(new_input_embeds, new_labels)):
             cur_len = cur_new_embed.shape[0]
