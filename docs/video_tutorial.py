@@ -23,8 +23,7 @@ from memory import KMeansMemory
 print("load model")
 warnings.filterwarnings("ignore")
 # Load the OneVision model
-pretrained = "/anvme/workspace/b232dd16-LLaVA-OV/checkpoints/llava-onevision-google_siglip-so400m-patch14-384-Qwen_Qwen2-7B-Instruct-memory_adapter_2nd"   # Use this for 7B model
-# pretrained = "/anvme/workspace/b232dd16-LLaVA-OV/llava-onevision-qwen2-7b-ov"   # Use this for 7B model
+pretrained = "lmms-lab/llava-onevision-qwen2-7b-ov"   # Use this for 7B model
 model_name = "llava_qwen"
 device = "cuda"
 device_map = "auto"
@@ -118,7 +117,7 @@ def dynamic_load_video(video_path):
 
 print("load video")
 # Load and process video
-video_path = "/home/hpc/b232dd/b232dd16/LLaVA-OV/docs/text_test.mp4"
+video_path = "jobs.mp4"
 # video_frames = load_video(video_path, 32)
 video_frames = load_video(video_path, 20)
 print(video_frames.shape) # (16, 1024, 576, 3)
