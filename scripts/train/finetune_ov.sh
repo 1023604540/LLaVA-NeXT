@@ -27,8 +27,8 @@ echo "BASE_RUN_NAME: ${BASE_RUN_NAME}"
 
 # Stage 2
 PROMPT_VERSION="qwen_1_5"
-RUN_NAME="llava-onevision-${VISION_MODEL_VERSION_CLEAN}-${LLM_VERSION_CLEAN}-correct_memory_adapter_no_compression"
-PREV_STAGE_CHECKPOINT="/anvme/workspace/b232dd16-LLaVA-OV/llava-onevision-qwen2-7b-ov" # replace it with your last checkpoint training from single image collection
+RUN_NAME="llava-onevision-${VISION_MODEL_VERSION_CLEAN}-${LLM_VERSION_CLEAN}-correct_memory_adapter_no_compression_2nd"
+PREV_STAGE_CHECKPOINT="/anvme/workspace/b232dd16-LLaVA-OV/checkpoints/llava-onevision-google_siglip-so400m-patch14-384-Qwen_Qwen2-7B-Instruct-correct_memory_adapter_no_compression/checkpoint-15000" # replace it with your last checkpoint training from single image collection
 echo "PREV_STAGE_CHECKPOINT: ${PREV_STAGE_CHECKPOINT}"
 echo "MID_RUN_NAME: ${RUN_NAME}"
 
@@ -45,7 +45,7 @@ ACCELERATE_CPU_AFFINITY=0 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --deepspeed scripts/zero2.json \
     --model_name_or_path $PREV_STAGE_CHECKPOINT \
     --version $PROMPT_VERSION \
-    --data_path /home/hpc/b232dd/b232dd16/LLaVA-OV/scripts/train/sharegpt_train.yaml \
+    --data_path /home/hpc/b232dd/b232dd16/LLaVA-OV/scripts/train/memory_train.yaml \
     --image_folder /anvme/workspace/b232dd21-zyr/llava-data \
     --video_folder /anvme/workspace/b232dd16-LLaVA-OV/llava-video \
     --mm_tunable_parts="attention_model,mm_mlp_adapter" \
