@@ -37,7 +37,7 @@ NUM_GPUS=4
 NNODES=$SLURM_NNODES
 RANK=$SLURM_PROCID
 ADDR=$(getent hosts $(scontrol show hostnames $SLURM_NODELIST | head -n1) | awk '{print $1}')
-PORT=$((12000 + RANDOM % 1000))
+PORT=12356
 
 
 echo "Master Addr: $ADDR"
