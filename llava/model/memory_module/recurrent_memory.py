@@ -58,7 +58,7 @@ class Attention(nn.Module):
 
     def transpose_for_scores(self, x):
         """
-        (B, P, D) -> (B, H, P, DH)
+        (B, Lq*P, D) -> (B, H, Lq*P, DH)
         where H = num_attention_heads, DH = attention_head_size
         """
         new_x_shape = x.size()[:-1] + (self.num_attention_heads, self.attention_head_size)
@@ -79,8 +79,7 @@ class Attention(nn.Module):
         If `kv_hidden_states` is None, we do self-attention.
         Otherwise, cross-attention with `kv_hidden_states` as K/V.
         """
-        query = self.transpose_for_scores(self.q_proj(hidden_states))
-        print("Query shape:", query.shape)
+        query = self.transpose_for_scores(self.q_proj(hidden_states))  # (B, H, Lq*P, DH)
 
         if kv_hidden_states is not None:
             # Cross-attention
@@ -104,8 +103,8 @@ class Attention(nn.Module):
             else:
                 key = self.transpose_for_scores(self.k_proj(hidden_states))
                 value = self.transpose_for_scores(self.v_proj(hidden_states))
-
-        attention_scores = torch.matmul(query, key.transpose(-1, -2))  # (B, H, P, P)
+        print("Key shape:", key.shape)
+        attention_scores = torch.matmul(query, key.transpose(-1, -2))  # (B, H, Lq*P, P)
         print("Attention scores shape:", attention_scores.shape)
         attention_scores = attention_scores / math.sqrt(self.attention_head_size)
         print("Attention scores shape after scaling:", attention_scores.shape)
