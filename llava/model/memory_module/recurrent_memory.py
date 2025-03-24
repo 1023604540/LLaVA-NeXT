@@ -80,6 +80,7 @@ class Attention(nn.Module):
         Otherwise, cross-attention with `kv_hidden_states` as K/V.
         """
         query = self.transpose_for_scores(self.q_proj(hidden_states))
+        print("Query shape:", query.shape)
 
         if kv_hidden_states is not None:
             # Cross-attention
@@ -123,7 +124,7 @@ class Attention(nn.Module):
         print("Context shape:", context.shape)
         context = context.permute(0, 2, 1, 3).contiguous()
         new_context_shape = context.size()[:-2] + (self.hidden_size,)
-        context = context.view(new_context_shape)
+        context = context.view(new_context_shape)  # (B, Lq*P, D)
         print("Context reshaped:", context.shape)
 
         # Residual
