@@ -221,6 +221,7 @@ class TransformerProjector(nn.Module):
         self.initial_memory = nn.Parameter(
             torch.randn(self.num_memory_tokens, self.patch_size, self.hidden_size)
         )
+        print(self.initial_memory.isnan().any())
 
         # This will store all previous memory tokens across calls
         self.memory_cache: List[torch.Tensor] = []
