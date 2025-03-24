@@ -36,10 +36,13 @@ echo "MID_RUN_NAME: ${RUN_NAME}"
 NUM_GPUS=4
 NNODES=$SLURM_NNODES
 RANK=$SLURM_PROCID
-ADDR=$(scontrol show hostname $SLURM_NODELIST | head -n1)  # Master node
-PORT=12346
+ADDR=$(getent hosts $(scontrol show hostnames $SLURM_NODELIST | head -n1) | awk '{print $1}')
+PORT=$((12000 + RANDOM % 1000))
 
 
+echo "Master Addr: $ADDR"
+echo "Rank: $RANK"
+echo "Num Nodes: $NNODES"
 
 ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NNODES}" --node_rank="${RANK}" --master_addr="${ADDR}" --master_port="${PORT}" \
     llava/train/train_mem.py \
