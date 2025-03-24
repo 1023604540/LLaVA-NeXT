@@ -118,9 +118,9 @@ def dynamic_load_video(video_path):
 
 print("load video")
 # Load and process video
-video_path = "/home/hpc/b232dd/b232dd16/LLaVA-OV/docs/text_test.mp4"
+video_path = "/home/hpc/b232dd/b232dd16/LLaVA-OV/docs/needle_32.mp4"
 # video_frames = load_video(video_path, 32)
-video_frames = load_video(video_path, 20)
+video_frames = load_video(video_path, 128)
 print(video_frames.shape) # (16, 1024, 576, 3)
 image_tensors = []
 frames = image_processor.preprocess(video_frames, return_tensors="pt")["pixel_values"].half().cuda()
@@ -167,7 +167,7 @@ def hidden_state_hook(module, input, output):
     return (modified_output,) + output[1:]
 
 # Register the hook before inference/generation
-hook_handle = model.model.layers[layer_to_hook].register_forward_hook(hidden_state_hook)
+# hook_handle = model.model.layers[layer_to_hook].register_forward_hook(hidden_state_hook)
 
 
 
