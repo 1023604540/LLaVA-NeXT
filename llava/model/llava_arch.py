@@ -31,6 +31,7 @@ from llava.utils import rank0_print, rank_print
 import random
 from llava.model.memory_module.memory_builder import NeuralTuringMachine, MultimodalOpsMixin
 from llava.model.memory_module.segment import segment, adjusted_segment
+from llava.model.memory_module.recurrent_memory import TransformerProjector
 
 
 ################################################################
@@ -371,11 +372,13 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     non_video_images.append(image)
                     non_video_positions.append(idx)
                     continue
+                # Init recurrent memory module
+                recurrent_memory_transformer = TransformerProjector().to(self.device)
                 boundaries = adjusted_segment(image.mean(dim=1).flatten(1,2))
                 #print(f"boundaries:{len(boundaries)}")
                 #print(f"boundaries:{boundaries}")
 
-                segment_memory = []
+                segment_memories = []
                 encoded_features = self.encode_images(image)
                 # print(f"Encoded features shape : {encoded_features.shape}, {encoded_features[0].shape}")
                 encoded_features = encoded_features.requires_grad_()
@@ -387,12 +390,14 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 for image_segment in image_segments:
                     #print(f"Image segment shape : {image_segment.shape}")
                     #print(f"Encoded segment shape : {encoded_segment.shape}")
-                    segment_memory += (self.compress_temporal_features([image_segment], video_idx_in_batch, all_video=True))
-                #print(f"Segment memory : {[x.shape for x in segment_memory if x is not None]}")
+                    segment_memory = self.compress_temporal_features([image_segment], video_idx_in_batch, all_video=True)
+                    segment_memories += segment_memory
+                    recurrent_memory, _ = recurrent_memory_transformer.forward(hidden_states=segment_memory)
+                # print(f"Segment memory : {[x.shape for x in segment_memory if x is not None]}")
                 # torch.cuda.synchronize()
                 # print("After attention_model forward pass")
 
-                cat_segment_memory = torch.cat([image for image in segment_memory], dim=0)
+                cat_segment_memory = torch.cat([image for image in segment_memories], dim=0)
                 rank0_print(f"cat_segment_memory shape : {cat_segment_memory.shape}")
                 if torch.isnan(cat_segment_memory).any():
                     raise ValueError("NaNs detected in attention_model output!")
