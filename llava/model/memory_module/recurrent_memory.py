@@ -103,32 +103,26 @@ class Attention(nn.Module):
             else:
                 key = self.transpose_for_scores(self.k_proj(hidden_states))
                 value = self.transpose_for_scores(self.v_proj(hidden_states))
-        print("Key shape:", key.shape)
-        attention_scores = torch.matmul(query, key.transpose(-1, -2))  # (B, H, Lq*P, P)
-        print("Attention scores shape:", attention_scores.shape)
+        # Key.shape (B, H, Lq*P, DH)
+        attention_scores = torch.matmul(query, key.transpose(-1, -2))  # (B, H, Lq*P(Q), Lq*P(K/V))
         attention_scores = attention_scores / math.sqrt(self.attention_head_size)
-        print("Attention scores shape after scaling:", attention_scores.shape)
 
         if attention_mask is not None:
             attention_scores += attention_mask
 
-        attention_probs = nn.functional.softmax(attention_scores, dim=-1)
-        print("Attention probs shape:", attention_probs.shape)
+        attention_probs = nn.functional.softmax(attention_scores, dim=-1)  # (B, H, Lq*P(Q), Lq*P(K/V))
         attention_probs = self.dropout(attention_probs)
 
         if head_mask is not None:
             attention_probs = attention_probs * head_mask
 
-        context = torch.matmul(attention_probs, value)
-        print("Context shape:", context.shape)
+        context = torch.matmul(attention_probs, value)  # (B, H, Lq*P, DH)
         context = context.permute(0, 2, 1, 3).contiguous()
         new_context_shape = context.size()[:-2] + (self.hidden_size,)
         context = context.view(new_context_shape)  # (B, Lq*P, D)
-        print("Context reshaped:", context.shape)
 
         # Residual
-        output = self.residual(context, hidden_states)
-        print("Output shape:", output.shape)
+        output = self.residual(context, hidden_states)  # (B, Lq*P, D)
 
         outputs = (output, attention_probs) if output_attentions else (output,)
         if past_key_value is not None:
