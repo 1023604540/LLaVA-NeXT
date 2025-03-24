@@ -1,6 +1,6 @@
 export OMP_NUM_THREADS=8
 export NCCL_IB_DISABLE=0
-export NCCL_IB_GID_INDEX=0
+
 export NCCL_SOCKET_IFNAME=ib0
 export NCCL_DEBUG=DEBUG
 export NCCL_DEBUG_SUBSYS=ALL
@@ -39,10 +39,8 @@ RANK=$SLURM_PROCID
 ADDR=$(getent hosts $(scontrol show hostnames $SLURM_NODELIST | head -n1) | awk '{print $1}')
 PORT=12356
 
+echo "[RANK $RANK] ADDR=$ADDR, PORT=$PORT"
 
-echo "Master Addr: $ADDR"
-echo "Rank: $RANK"
-echo "Num Nodes: $NNODES"
 
 ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NNODES}" --node_rank="${RANK}" --master_addr="${ADDR}" --master_port="${PORT}" \
     llava/train/train_mem.py \
