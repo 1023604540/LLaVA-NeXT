@@ -101,14 +101,14 @@ class LlavaMetaModel:
 
         self.mm_input_dim = getattr(config, "ntm_hidden_size", 1152)
         compress_Turing_hidden_dim = getattr(config, "compress_Turing_hidden_dim", 32)
-        # Now init in memory_builder
+        # Now initiate the memory_builder
         self.attention_model = NeuralTuringMachine(self.mm_input_dim, compress_Turing_hidden_dim).to(self.device)
         self.memory_mlp = nn.Sequential(
             nn.Linear(1152, 1152),
             nn.GELU(),
             nn.Linear(1152, 1152),
         ).to(self.device)
-
+        self.recurrent_memory_transformer = TransformerProjector().to(self.device)
     def get_vision_tower(self):
         vision_tower = getattr(self, "vision_tower", None)
         if type(vision_tower) is list:
@@ -373,7 +373,6 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     non_video_positions.append(idx)
                     continue
                 # Init recurrent memory module
-                recurrent_memory_transformer = TransformerProjector().to(self.device)
                 boundaries = adjusted_segment(image.mean(dim=1).flatten(1,2))
                 #print(f"boundaries:{len(boundaries)}")
                 #print(f"boundaries:{boundaries}")
@@ -394,7 +393,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     segment_memories += segment_memory
                     print(segment_memory[0].dtype)
                     assert len(segment_memory) == 1
-                    recurrent_memory = recurrent_memory_transformer(segment_memory[0])
+                    recurrent_memory = self.recurrent_memory_transformer(segment_memory[0])
                     print(f"Recurrent memory shape : {recurrent_memory.shape}")
                 # print(f"Segment memory : {[x.shape for x in segment_memory if x is not None]}")
                 # torch.cuda.synchronize()
