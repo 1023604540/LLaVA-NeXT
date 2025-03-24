@@ -109,6 +109,7 @@ class LlavaMetaModel:
             nn.Linear(1152, 1152),
         ).to(self.device)
         self.recurrent_memory_transformer = TransformerProjector().to(self.device)
+
     def get_vision_tower(self):
         vision_tower = getattr(self, "vision_tower", None)
         if type(vision_tower) is list:
@@ -310,7 +311,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
 
     def add_token_per_frame(self, image_feature):
         image_feature = image_feature.permute(2, 0, 1).contiguous()  # [3584, frame_num, 196]
-        image_feature =  torch.cat((image_feature, self.model.image_newline[:, None, None].expand(*image_feature.shape[:-1], 1).to(image_feature.device)), dim=-1)  # [3584, frame_num, 197]
+        image_feature = torch.cat((image_feature, self.model.image_newline[:, None, None].expand(*image_feature.shape[:-1], 1).to(image_feature.device)), dim=-1)  # [3584, frame_num, 197]
         image_feature = image_feature.permute(1, 2, 0).contiguous()  # [frame_num, 197, 3584]
         return image_feature
 
@@ -393,7 +394,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     segment_memories += segment_memory
                     print(segment_memory[0].dtype)
                     assert len(segment_memory) == 1
-                    recurrent_memory = self.recurrent_memory_transformer(segment_memory[0])
+                    recurrent_memory = self.get_model().recurrent_memory_transformer(segment_memory[0])
                     print(f"Recurrent memory shape : {recurrent_memory.shape}")
                 # print(f"Segment memory : {[x.shape for x in segment_memory if x is not None]}")
                 # torch.cuda.synchronize()
