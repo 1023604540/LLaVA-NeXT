@@ -294,7 +294,8 @@ class TransformerProjector(nn.Module):
             print("Memory cache length:", len(self.memory_cache))
             # (2) Cross-attention update with entire memory_cache
             current_memory = self._update_memory_tokens_with_cache(current_memory)
-
+        if torch.isnan(current_memory).any():
+            raise ValueError("NaNs detected in current_memory!")
         # (3) Prepend memory to new image features => shape (F+n, P, D)
         combined = torch.cat([current_memory, image_features], dim=0)
 
@@ -316,6 +317,9 @@ class TransformerProjector(nn.Module):
                 output_attentions=False,
             )
             hidden_states = layer_outputs[0]  # (1, (F+n)*P, D)
+
+        if torch.isnan(hidden_states).any():
+            raise ValueError("NaNs detected in hidden_states!")
 
         # (5) Reshape back, split out memory vs. image
         hidden_4d = hidden_states.view(B, L, P_, D_)  # => (1, F+n, P, D)
