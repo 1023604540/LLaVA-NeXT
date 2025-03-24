@@ -379,6 +379,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 #print(f"boundaries:{boundaries}")
 
                 segment_memories = []
+                recurrent_memory = None
                 encoded_features = self.encode_images(image)
                 # print(f"Encoded features shape : {encoded_features.shape}, {encoded_features[0].shape}")
                 encoded_features = encoded_features.requires_grad_()
