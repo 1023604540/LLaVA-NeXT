@@ -287,6 +287,8 @@ class TransformerProjector(nn.Module):
         if len(self.memory_cache) == 0:
             # First call: use initial_memory
             current_memory = self.initial_memory.to(device=device, dtype=dtype)
+            if torch.isnan(current_memory).any():
+                raise ValueError("NaNs detected in current_memory!")
         else:
             # Later calls: use last updated memory from memory_cache
             current_memory = self.memory_cache[-1].to(device=device, dtype=dtype)
@@ -294,8 +296,7 @@ class TransformerProjector(nn.Module):
             print("Memory cache length:", len(self.memory_cache))
             # (2) Cross-attention update with entire memory_cache
             current_memory = self._update_memory_tokens_with_cache(current_memory)
-        if torch.isnan(current_memory).any():
-            raise ValueError("NaNs detected in current_memory!")
+
         # (3) Prepend memory to new image features => shape (F+n, P, D)
         combined = torch.cat([current_memory, image_features], dim=0)
 
