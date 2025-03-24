@@ -32,11 +32,11 @@ llava_model_args = {
     "multimodal": True,
 }
 tokenizer, model, image_processor, max_length = load_pretrained_model(pretrained, None, model_name, device_map=device_map, attn_implementation="sdpa", **llava_model_args)
-print(model)
-for idx, (name, param) in enumerate(model.named_parameters()):
-    print(idx, name, param.shape)
-
-model.eval()
+# print(model)
+# for idx, (name, param) in enumerate(model.named_parameters()):
+#     print(idx, name, param.shape)
+#
+# model.eval()
 
 
 # Function to extract frames from video

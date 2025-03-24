@@ -392,15 +392,17 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     #print(f"Encoded segment shape : {encoded_segment.shape}")
                     segment_memory = self.compress_temporal_features([image_segment], video_idx_in_batch, all_video=True)
                     segment_memories += segment_memory
-                    print(segment_memory[0].dtype)
                     assert len(segment_memory) == 1
                     recurrent_memory = self.get_model().recurrent_memory_transformer(segment_memory[0])
                     print(f"Recurrent memory shape : {recurrent_memory.shape}")
+
                 # print(f"Segment memory : {[x.shape for x in segment_memory if x is not None]}")
                 # torch.cuda.synchronize()
                 # print("After attention_model forward pass")
 
                 cat_segment_memory = torch.cat([image for image in segment_memories], dim=0)
+                if recurrent_memory is not None:
+                    cat_segment_memory = torch.cat([cat_segment_memory, recurrent_memory], dim=0)
                 rank0_print(f"cat_segment_memory shape : {cat_segment_memory.shape}")
                 if torch.isnan(cat_segment_memory).any():
                     raise ValueError("NaNs detected in attention_model output!")
