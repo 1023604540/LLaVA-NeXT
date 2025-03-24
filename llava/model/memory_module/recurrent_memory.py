@@ -324,7 +324,7 @@ class TransformerProjector(nn.Module):
         self.memory_cache.append(new_memory_tokens.squeeze(0).detach())
 
         # Return just the updated image portion
-        return updated_image_features.squeeze(0)
+        return new_memory_tokens.squeeze(0)
 
 
 #
