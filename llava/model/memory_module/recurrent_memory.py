@@ -7,6 +7,20 @@ from torch import nn
 from transformers.activations import ACT2FN
 
 
+class Config:
+    mm_hidden_size = 1152
+    mm_hidden_act = 'relu'
+    mm_num_attention_heads = 8
+    patch_size = 729  # Patch size
+    mm_attention_probs_dropout_prob = 0.1  # Attention dropout
+    mm_layer_norm_eps = 1e-12  # LayerNorm epsilon
+    mm_hidden_dropout_prob = 0.1  # Residual dropout
+    mm_intermediate_size = 4096  # Feedforward hidden layer size
+    num_memory_tokens = 8  # Number of memory tokens
+    depth = 1  # Number of Transformer layers
+    mm_dtype = torch.float16
+
+
 class Residual(nn.Module):
     def __init__(self, input_size, output_size, config):
         super().__init__()
@@ -185,19 +199,6 @@ class TransformerLayer(nn.Module):
         return (layer_output,) + outputs
 
 
-class Config:
-    mm_hidden_size = 1152
-    mm_hidden_act = 'relu'
-    mm_num_attention_heads = 8
-    patch_size = 729  # Patch size
-    mm_attention_probs_dropout_prob = 0.1  # Attention dropout
-    mm_layer_norm_eps = 1e-12  # LayerNorm epsilon
-    mm_hidden_dropout_prob = 0.1  # Residual dropout
-    mm_intermediate_size = 4096  # Feedforward hidden layer size
-    num_memory_tokens = 8  # Number of memory tokens
-    depth = 1  # Number of Transformer layers
-    mm_dtype = torch.float16
-
 
 class TransformerProjector(nn.Module):
     def __init__(self, config=None):
@@ -336,13 +337,13 @@ if __name__ == "__main__":
     proj = TransformerProjector(config)
 
     # Suppose we have input image_features with shape (F=4, P=729, D=1152)
-    dummy_input = torch.randn(4, 729, 1152)
+    dummy_input = torch.randn(10, 729, 1152)
 
     out = proj(dummy_input)
-    print("Output shape after first call:", out.shape)  # => (4, 729, 1152)
+    print("Output shape after first call:", out.shape)  # => (8, 729, 1152)
 
     # Now the cache has 1 set of memory tokens.
     # Next time, we use the memory_cache[-1] from the last pass, not the initial_memory.
-    dummy_input2 = torch.randn(5, 729, 1152)
+    dummy_input2 = torch.randn(12, 729, 1152)
     out2 = proj(dummy_input2)
-    print("Output shape after second call:", out2.shape)  # => (5, 729, 1152)
+    print("Output shape after second call:", out2.shape)  # => (8, 729, 1152)
