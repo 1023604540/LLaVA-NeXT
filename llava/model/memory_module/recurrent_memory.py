@@ -7,7 +7,7 @@ from torch import nn
 from transformers.activations import ACT2FN
 
 
-class Config:
+class config:
     mm_hidden_size = 1152
     mm_hidden_act = 'relu'
     mm_num_attention_heads = 8
@@ -219,7 +219,7 @@ class TransformerProjector(nn.Module):
 
         # The "initial" memory tokens (m0): shape (n, patch, d).
         self.initial_memory = nn.Parameter(
-            torch.randn(self.num_memory_tokens, self.patch_size, self.hidden_size, dtype=config.mm_dtype)
+            torch.randn(self.num_memory_tokens, self.patch_size, self.hidden_size, dtype=self.config.mm_dtype)
         )
 
         # This will store all previous memory tokens across calls
