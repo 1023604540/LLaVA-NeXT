@@ -20,15 +20,15 @@ VISION_MODEL_VERSION_CLEAN="${VISION_MODEL_VERSION//\//_}"
 
 ############### Pretrain ################
 
-BASE_RUN_NAME="llavanext-google_siglip-so400m-patch14-384-Qwen_Qwen2-7B-Instruct-mlp2x_gelu-pretrain_blip558k_plain"
+BASE_RUN_NAME="llavanext"
 echo "BASE_RUN_NAME: ${BASE_RUN_NAME}"
 
 ############### Finetune ################
 
 # Stage 2
 PROMPT_VERSION="qwen_1_5"
-RUN_NAME="llava-onevision-${VISION_MODEL_VERSION_CLEAN}-${LLM_VERSION_CLEAN}-correct_memory_adapter_no_compression_2nd"
-PREV_STAGE_CHECKPOINT="/anvme/workspace/b232dd16-LLaVA-OV/checkpoints/llava-onevision-google_siglip-so400m-patch14-384-Qwen_Qwen2-7B-Instruct-correct_memory_adapter_no_compression/checkpoint-15000" # replace it with your last checkpoint training from single image collection
+RUN_NAME="llava-onevision-${VISION_MODEL_VERSION_CLEAN}-${LLM_VERSION_CLEAN}-correct_memory_adapter"
+PREV_STAGE_CHECKPOINT="lmms-lab/llava-onevision-qwen2-7b-ov" # replace it with your last checkpoint training from single image collection
 echo "PREV_STAGE_CHECKPOINT: ${PREV_STAGE_CHECKPOINT}"
 echo "MID_RUN_NAME: ${RUN_NAME}"
 
@@ -45,9 +45,9 @@ ACCELERATE_CPU_AFFINITY=0 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --deepspeed scripts/zero2.json \
     --model_name_or_path $PREV_STAGE_CHECKPOINT \
     --version $PROMPT_VERSION \
-    --data_path /home/hpc/b232dd/b232dd16/LLaVA-OV/scripts/train/memory_train.yaml \
-    --image_folder /anvme/workspace/b232dd21-zyr/llava-data \
-    --video_folder /anvme/workspace/b232dd16-LLaVA-OV/llava-video \
+    --data_path /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/LLaVA-NeXT/scripts/train/video_datasets.yaml \
+    --image_folder /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/llava-video/videos \
+    --video_folder /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/llava-video/videos \
     --mm_tunable_parts="attention_model,mm_mlp_adapter" \
     --mm_vision_tower_lr=2e-6 \
     --vision_tower ${VISION_MODEL_VERSION} \
@@ -61,7 +61,7 @@ ACCELERATE_CPU_AFFINITY=0 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --mm_patch_merge_type spatial_unpad \
     --bf16 True \
     --run_name $RUN_NAME \
-    --output_dir /anvme/workspace/b232dd16-LLaVA-OV/checkpoints/$RUN_NAME \
+    --output_dir /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/checkpoints/$RUN_NAME \
     --num_train_epochs 1 \
     --per_device_train_batch_size 1 \
     --per_device_eval_batch_size 4 \
