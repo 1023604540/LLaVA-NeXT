@@ -392,7 +392,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     #print(f"Encoded segment shape : {encoded_segment.shape}")
                     segment_memory = self.compress_temporal_features([image_segment], video_idx_in_batch, all_video=True)
                     segment_memories += segment_memory
-                    recurrent_memory = recurrent_memory_transformer(segment_memory)
+                    recurrent_memory = recurrent_memory_transformer(segment_memory[0])
                     print(f"Recurrent memory shape : {recurrent_memory.shape}")
                 # print(f"Segment memory : {[x.shape for x in segment_memory if x is not None]}")
                 # torch.cuda.synchronize()
