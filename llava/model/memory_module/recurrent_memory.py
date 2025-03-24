@@ -219,10 +219,8 @@ class TransformerProjector(nn.Module):
 
         # The "initial" memory tokens (m0): shape (n, patch, d).
         self.initial_memory = nn.Parameter(
-            torch.randn(self.num_memory_tokens, self.patch_size, self.hidden_size)
+            torch.randn(self.num_memory_tokens, self.patch_size, self.hidden_size, dtype=config.mm_dtype)
         )
-        print(self.initial_memory.isnan().any())
-        print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
 
         # This will store all previous memory tokens across calls
         self.memory_cache: List[torch.Tensor] = []
