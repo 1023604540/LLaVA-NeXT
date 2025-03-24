@@ -1675,6 +1675,8 @@ def train(attn_implementation=None):
                     p.requires_grad = True
                 for p in model.get_model().memory_mlp.parameters():
                     p.requires_grad = True
+                for p in model.get_model().recurrent_memory_transformer.parameters():
+                    p.requires_grad = True
             if "mm_vision_resampler" in tunable_parts:
                 for p in model.get_model().vision_resampler.parameters():
                     p.requires_grad = True
