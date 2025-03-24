@@ -37,14 +37,12 @@ NUM_GPUS=4
 NNODES=$SLURM_NNODES
 RANK=$SLURM_PROCID
 ADDR=$(getent hosts $(scontrol show hostnames $SLURM_NODELIST | head -n1) | awk '{print $1}')
-PORT=12356
+PORT=22356
 
 echo "[RANK $RANK] ADDR=$ADDR, PORT=$PORT"
 
 
 ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NNODES}" --node_rank="${RANK}" --master_addr="${ADDR}" --master_port="${PORT}" \
-    --rdzv_id=$SLURM_JOB_ID --rdzv_backend=c10d \
-    --rdzv_endpoint="${ADDR}:${PORT}" \
     llava/train/train_mem.py \
     --deepspeed scripts/zero3.json \
     --model_name_or_path $PREV_STAGE_CHECKPOINT \
