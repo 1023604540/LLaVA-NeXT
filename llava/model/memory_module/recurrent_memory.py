@@ -10,8 +10,8 @@ from transformers.activations import ACT2FN
 class Residual(nn.Module):
     def __init__(self, input_size, output_size, config):
         super().__init__()
-        self.dense = nn.Linear(input_size, output_size)
-        self.layernorm = nn.LayerNorm(output_size, eps=config.mm_layer_norm_eps)
+        self.dense = nn.Linear(input_size, output_size, dtype=config.mm_dtype)
+        self.layernorm = nn.LayerNorm(output_size, eps=config.mm_layer_norm_eps, dtype=config.mm_dtype)
         self.dropout = nn.Dropout(config.mm_hidden_dropout_prob)
 
     def forward(
@@ -35,9 +35,9 @@ class Attention(nn.Module):
 
         assert config.mm_hidden_size % config.mm_num_attention_heads == 0
 
-        self.k_proj = nn.Linear(config.mm_hidden_size, config.mm_hidden_size)
-        self.v_proj = nn.Linear(config.mm_hidden_size, config.mm_hidden_size)
-        self.q_proj = nn.Linear(config.mm_hidden_size, config.mm_hidden_size)
+        self.k_proj = nn.Linear(config.mm_hidden_size, config.mm_hidden_size, dtype=config.mm_dtype)
+        self.v_proj = nn.Linear(config.mm_hidden_size, config.mm_hidden_size, dtype=config.mm_dtype)
+        self.q_proj = nn.Linear(config.mm_hidden_size, config.mm_hidden_size, dtype=config.mm_dtype)
         self.dropout = nn.Dropout(config.mm_attention_probs_dropout_prob)
 
         self.residual = Residual(config.mm_hidden_size, config.mm_hidden_size, config)
@@ -125,7 +125,7 @@ class TransformerLayer(nn.Module):
         self.cross_attention = Attention(config)
 
         self.mlp = nn.Sequential(
-            nn.Linear(config.mm_hidden_size, config.mm_intermediate_size),
+            nn.Linear(config.mm_hidden_size, config.mm_intermediate_size, dtype=config.mm_dtype),
             ACT2FN[config.mm_hidden_act],
         )
         self.residual = Residual(config.mm_intermediate_size, config.mm_hidden_size, config)
@@ -196,6 +196,7 @@ class Config:
     mm_intermediate_size = 4096  # Feedforward hidden layer size
     num_memory_tokens = 16  # Number of memory tokens
     depth = 1  # Number of Transformer layers
+    mm_dtype = torch.float16
 
 
 class TransformerProjector(nn.Module):
