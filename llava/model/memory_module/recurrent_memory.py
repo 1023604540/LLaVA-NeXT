@@ -58,7 +58,7 @@ class Attention(nn.Module):
 
     def transpose_for_scores(self, x):
         """
-        (B, L, D) -> (B, H, L, DH)
+        (B, P, D) -> (B, H, P, DH)
         where H = num_attention_heads, DH = attention_head_size
         """
         new_x_shape = x.size()[:-1] + (self.num_attention_heads, self.attention_head_size)
@@ -70,27 +70,27 @@ class Attention(nn.Module):
         hidden_states: torch.Tensor,
         attention_mask: Optional[torch.FloatTensor] = None,
         head_mask: Optional[torch.FloatTensor] = None,
-        encoder_hidden_states: Optional[torch.FloatTensor] = None,
-        encoder_attention_mask: Optional[torch.FloatTensor] = None,
+        kv_hidden_states: Optional[torch.FloatTensor] = None,
+        kv_attention_mask: Optional[torch.FloatTensor] = None,
         past_key_value: Optional[Tuple[Tuple[torch.FloatTensor]]] = None,
         output_attentions: Optional[bool] = False,
     ):
         """
-        If `encoder_hidden_states` is None, we do self-attention.
-        Otherwise, cross-attention with `encoder_hidden_states` as K/V.
+        If `kv_hidden_states` is None, we do self-attention.
+        Otherwise, cross-attention with `kv_hidden_states` as K/V.
         """
         query = self.transpose_for_scores(self.q_proj(hidden_states))
 
-        if encoder_hidden_states is not None:
+        if kv_hidden_states is not None:
             # Cross-attention
             if past_key_value is not None:
                 key = past_key_value[0]
                 value = past_key_value[1]
-                attention_mask = encoder_attention_mask
+                attention_mask = kv_attention_mask
             else:
-                key = self.transpose_for_scores(self.k_proj(encoder_hidden_states))
-                value = self.transpose_for_scores(self.v_proj(encoder_hidden_states))
-                attention_mask = encoder_attention_mask
+                key = self.transpose_for_scores(self.k_proj(kv_hidden_states))
+                value = self.transpose_for_scores(self.v_proj(kv_hidden_states))
+                attention_mask = kv_attention_mask
 
             past_key_value = (key, value)
         else:
@@ -104,25 +104,31 @@ class Attention(nn.Module):
                 key = self.transpose_for_scores(self.k_proj(hidden_states))
                 value = self.transpose_for_scores(self.v_proj(hidden_states))
 
-        attention_scores = torch.matmul(query, key.transpose(-1, -2))  # (B, H, N, M)
+        attention_scores = torch.matmul(query, key.transpose(-1, -2))  # (B, H, P, P)
+        print("Attention scores shape:", attention_scores.shape)
         attention_scores = attention_scores / math.sqrt(self.attention_head_size)
+        print("Attention scores shape after scaling:", attention_scores.shape)
 
         if attention_mask is not None:
             attention_scores += attention_mask
 
         attention_probs = nn.functional.softmax(attention_scores, dim=-1)
+        print("Attention probs shape:", attention_probs.shape)
         attention_probs = self.dropout(attention_probs)
 
         if head_mask is not None:
             attention_probs = attention_probs * head_mask
 
         context = torch.matmul(attention_probs, value)
+        print("Context shape:", context.shape)
         context = context.permute(0, 2, 1, 3).contiguous()
         new_context_shape = context.size()[:-2] + (self.hidden_size,)
         context = context.view(new_context_shape)
+        print("Context reshaped:", context.shape)
 
         # Residual
         output = self.residual(context, hidden_states)
+        print("Output shape:", output.shape)
 
         outputs = (output, attention_probs) if output_attentions else (output,)
         if past_key_value is not None:
@@ -154,8 +160,8 @@ class TransformerLayer(nn.Module):
         hidden_states: torch.Tensor,
         attention_mask: Optional[torch.FloatTensor] = None,
         head_mask: Optional[torch.FloatTensor] = None,
-        encoder_hidden_states: Optional[torch.FloatTensor] = None,
-        encoder_attention_mask: Optional[torch.FloatTensor] = None,
+        kv_hidden_states: Optional[torch.FloatTensor] = None,
+        kv_attention_mask: Optional[torch.FloatTensor] = None,
         past_key_value: Optional[Tuple[Tuple[torch.FloatTensor]]] = None,
         output_attentions: Optional[bool] = False,
     ):
@@ -181,14 +187,14 @@ class TransformerLayer(nn.Module):
         attention_output = self_attention_outputs[0]
         outputs = self_attention_outputs[1:]  # e.g. attention_probs, (past_key_value)...
 
-        # (2) Optional cross-attention if encoder_hidden_states given
-        if encoder_hidden_states is not None:
+        # (2) Optional cross-attention if kv_hidden_states given
+        if kv_hidden_states is not None:
             cross_attn_out = self.cross_attention(
                 attention_output,
                 attention_mask=None,
                 head_mask=head_mask,
-                encoder_hidden_states=encoder_hidden_states,
-                encoder_attention_mask=encoder_attention_mask,
+                kv_hidden_states=kv_hidden_states,
+                kv_attention_mask=kv_attention_mask,
                 output_attentions=output_attentions,
             )
             attention_output = cross_attn_out[0]
@@ -222,7 +228,7 @@ class TransformerProjector(nn.Module):
             torch.randn(self.num_memory_tokens, self.patch_size, self.hidden_size)
         )
 
-        # This will store all past memory tokens across calls
+        # This will store all previous memory tokens across calls
         self.memory_cache: List[torch.Tensor] = []
 
     def _update_memory_tokens_with_cache(
@@ -237,7 +243,7 @@ class TransformerProjector(nn.Module):
             # No previous memory: just return the current memory as-is
             return current_memory
 
-        # Combine all past memory tokens into a single large tensor
+        # Combine all previous memory tokens into a single large tensor
         # Suppose each item in memory_cache is shape (n, patch, d).
         # We'll cat them on dim=0 => shape (N*n, patch, d).
         past_memory = torch.cat(self.memory_cache, dim=0).unsqueeze(0)  # (1, N*n, patch, d)
@@ -253,7 +259,7 @@ class TransformerProjector(nn.Module):
         # Use the dedicated cross-attention layer
         cross_attn_out = self.memory_retrieval_attention(
             hidden_states=query_2d,
-            encoder_hidden_states=keyval_2d,
+            kv_hidden_states=keyval_2d,
             attention_mask=None,
             head_mask=None,
             output_attentions=False
@@ -311,8 +317,8 @@ class TransformerProjector(nn.Module):
                 hidden_states,
                 attention_mask=None,
                 head_mask=layer_head_mask,
-                encoder_hidden_states=None,
-                encoder_attention_mask=None,
+                kv_hidden_states=None,
+                kv_attention_mask=None,
                 output_attentions=False,
             )
             hidden_states = layer_outputs[0]  # (1, (F+n)*P, D)
