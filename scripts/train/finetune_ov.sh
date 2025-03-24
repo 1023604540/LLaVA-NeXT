@@ -1,11 +1,11 @@
 export OMP_NUM_THREADS=8
 export NCCL_IB_DISABLE=0
-
 export NCCL_SOCKET_IFNAME=ib0
 export NCCL_DEBUG=DEBUG
 export NCCL_DEBUG_SUBSYS=ALL
 export NCCL_TIMEOUT=3600  # 1 hour
 export TORCH_NCCL_TRACE_BUFFER_SIZE=33554432
+export TORCH_DISTRIBUTED_DEBUG=DETAIL
 
 export WANDB_API_KEY="638aa591e9881cd840eb171df3f625bcd7613d14"
 
@@ -36,13 +36,17 @@ echo "MID_RUN_NAME: ${RUN_NAME}"
 NUM_GPUS=4
 NNODES=$SLURM_NNODES
 RANK=$SLURM_PROCID
-ADDR=$(getent hosts $(scontrol show hostnames $SLURM_NODELIST | head -n1) | awk '{print $1}')
-PORT=22356
-
-echo "[RANK $RANK] ADDR=$ADDR, PORT=$PORT"
+MASTER_ADDR=$(hostname -s)
+MASTER_PORT=29500
 
 
-ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NNODES}" --node_rank="${RANK}" --master_addr="${ADDR}" --master_port="${PORT}" \
+export MASTER_ADDR=$SLURM_LAUNCH_NODE_IPADDR
+export MASTER_PORT=29500
+
+echo "[RANK $RANK] MASTER_ADDR=$MASTER_ADDR, MASTER_PORT=$MASTER_PORT"
+
+
+ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NNODES}" --node_rank="${RANK}" --master_addr="${MASTER_ADDR}" --master_port="${MASTER_PORT}" \
     llava/train/train_mem.py \
     --deepspeed scripts/zero3.json \
     --model_name_or_path $PREV_STAGE_CHECKPOINT \
