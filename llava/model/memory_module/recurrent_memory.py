@@ -203,7 +203,7 @@ class TransformerLayer(nn.Module):
 class TransformerProjector(nn.Module):
     def __init__(self, config=None):
         super().__init__()
-        self.config = config if config is not None else Config()
+        self.config = config if config is not None else config()
 
         # Main Transformer layers (self-attention for the input + memory tokens)
         self.layers = nn.ModuleList(
@@ -338,7 +338,7 @@ class TransformerProjector(nn.Module):
 # EXAMPLE USAGE
 #
 if __name__ == "__main__":
-    config = Config()
+    config = config()
     proj = TransformerProjector(config)
 
     # Suppose we have input image_features with shape (F=4, P=729, D=1152)
