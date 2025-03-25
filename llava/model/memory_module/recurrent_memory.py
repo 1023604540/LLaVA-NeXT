@@ -204,9 +204,8 @@ class TransformerProjector(nn.Module):
 
         # Define initial memory (uninitialized)
         self.initial_memory = nn.Parameter(
-            torch.empty(
-                self.num_memory_tokens, self.patch_size, self.hidden_size,
-                dtype=self.config.mm_dtype
+            torch.randn(
+                self.num_memory_tokens, self.patch_size, self.hidden_size
             )
         )
 
@@ -303,23 +302,23 @@ class TransformerProjector(nn.Module):
     #
     # Optional initialization function:
     #
-    def init_weights_(self):
-        """
-        Optional: Call this after you've placed the model on a real device
-        (CPU/GPU) if you want to random-initialize everything.
-        """
-        for name, param in self.named_parameters():
-            # Check if param is still on meta
-            if param.device.type == "meta":
-                raise RuntimeError(
-                    f"Parameter {name} is on meta. Move model to a real device before init."
-                )
-
-            # Example default init
-            if param.dim() > 1:
-                nn.init.xavier_normal_(param)
-            else:
-                nn.init.zeros_(param)
+    # def init_weights_(self):
+    #     """
+    #     Optional: Call this after you've placed the model on a real device
+    #     (CPU/GPU) if you want to random-initialize everything.
+    #     """
+    #     for name, param in self.named_parameters():
+    #         # Check if param is still on meta
+    #         if param.device.type == "meta":
+    #             raise RuntimeError(
+    #                 f"Parameter {name} is on meta. Move model to a real device before init."
+    #             )
+    #
+    #         # Example default init
+    #         if param.dim() > 1:
+    #             nn.init.xavier_normal_(param)
+    #         else:
+    #             nn.init.zeros_(param)
 
 
 #
