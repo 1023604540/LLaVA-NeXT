@@ -9,7 +9,7 @@ from transformers.activations import ACT2FN
 
 class Config:
     mm_hidden_size = 1152
-    mm_hidden_act = 'relu'
+    mm_hidden_act = "relu"
     mm_num_attention_heads = 8
     patch_size = 729  # Patch size
     mm_attention_probs_dropout_prob = 0.1  # Attention dropout
@@ -24,15 +24,16 @@ class Config:
 class Residual(nn.Module):
     def __init__(self, input_size, output_size, config):
         super().__init__()
-        self.dense = nn.Linear(input_size, output_size, dtype=config.mm_dtype)
-        self.layernorm = nn.LayerNorm(output_size, eps=config.mm_layer_norm_eps, dtype=config.mm_dtype)
+        # Define layers with a specified dtype, but do NOT force a device here
+        self.dense = nn.Linear(
+            input_size, output_size, dtype=config.mm_dtype
+        )
+        self.layernorm = nn.LayerNorm(
+            output_size, eps=config.mm_layer_norm_eps, dtype=config.mm_dtype
+        )
         self.dropout = nn.Dropout(config.mm_hidden_dropout_prob)
 
-    def forward(
-        self,
-        hidden_states: torch.Tensor,
-        input_tensor: torch.Tensor,
-    ):
+    def forward(self, hidden_states: torch.Tensor, input_tensor: torch.Tensor):
         hidden_states = self.dense(hidden_states)
         hidden_states = self.dropout(hidden_states)
         hidden_states = self.layernorm(hidden_states + input_tensor)
@@ -45,17 +46,17 @@ class Attention(nn.Module):
 
         self.hidden_size = config.mm_hidden_size
         self.num_attention_heads = config.mm_num_attention_heads
-        self.attention_head_size = config.mm_hidden_size // config.mm_num_attention_heads
+        self.attention_head_size = self.hidden_size // self.num_attention_heads
 
-        assert config.mm_hidden_size % config.mm_num_attention_heads == 0
+        assert self.hidden_size % self.num_attention_heads == 0
 
-        self.k_proj = nn.Linear(config.mm_hidden_size, config.mm_hidden_size, dtype=config.mm_dtype)
-        print(config.mm_dtype)
-        self.v_proj = nn.Linear(config.mm_hidden_size, config.mm_hidden_size, dtype=config.mm_dtype)
-        self.q_proj = nn.Linear(config.mm_hidden_size, config.mm_hidden_size, dtype=config.mm_dtype)
+        # Again, no explicit device; just dtype
+        self.k_proj = nn.Linear(self.hidden_size, self.hidden_size, dtype=config.mm_dtype)
+        self.v_proj = nn.Linear(self.hidden_size, self.hidden_size, dtype=config.mm_dtype)
+        self.q_proj = nn.Linear(self.hidden_size, self.hidden_size, dtype=config.mm_dtype)
+
         self.dropout = nn.Dropout(config.mm_attention_probs_dropout_prob)
-
-        self.residual = Residual(config.mm_hidden_size, config.mm_hidden_size, config)
+        self.residual = Residual(self.hidden_size, self.hidden_size, config)
 
     def transpose_for_scores(self, x):
         """
@@ -104,26 +105,26 @@ class Attention(nn.Module):
             else:
                 key = self.transpose_for_scores(self.k_proj(hidden_states))
                 value = self.transpose_for_scores(self.v_proj(hidden_states))
-        # Key.shape (B, H, Lq*P, DH)
-        attention_scores = torch.matmul(query, key.transpose(-1, -2))  # (B, H, Lq*P(Q), Lq*P(K/V))
+
+        attention_scores = torch.matmul(query, key.transpose(-1, -2))
         attention_scores = attention_scores / math.sqrt(self.attention_head_size)
 
         if attention_mask is not None:
             attention_scores += attention_mask
 
-        attention_probs = nn.functional.softmax(attention_scores, dim=-1)  # (B, H, Lq*P(Q), Lq*P(K/V))
+        attention_probs = nn.functional.softmax(attention_scores, dim=-1)
         attention_probs = self.dropout(attention_probs)
 
         if head_mask is not None:
             attention_probs = attention_probs * head_mask
 
-        context = torch.matmul(attention_probs, value)  # (B, H, Lq*P, DH)
+        context = torch.matmul(attention_probs, value)
         context = context.permute(0, 2, 1, 3).contiguous()
         new_context_shape = context.size()[:-2] + (self.hidden_size,)
         context = context.view(new_context_shape)  # (B, Lq*P, D)
 
         # Residual
-        output = self.residual(context, hidden_states)  # (B, Lq*P, D)
+        output = self.residual(context, hidden_states)
 
         outputs = (output, attention_probs) if output_attentions else (output,)
         if past_key_value is not None:
@@ -135,9 +136,7 @@ class Attention(nn.Module):
 class TransformerLayer(nn.Module):
     def __init__(self, config):
         super().__init__()
-
         self.self_attention = Attention(config)
-        # self.cross_attention = Attention(config)
 
         self.mlp = nn.Sequential(
             nn.Linear(config.mm_hidden_size, config.mm_intermediate_size, dtype=config.mm_dtype),
@@ -163,42 +162,27 @@ class TransformerLayer(nn.Module):
         """
         Standard Transformer block:
         1) Self-Attention
-        2) (Optional) Cross-Attention
-        3) Feed-forward
+        2) Feed-forward
         """
         if past_key_value is not None:
             self_past_key_value = past_key_value[:2]
         else:
             self_past_key_value = None
 
-        # (1) Self-Attention
+        # Self-Attention
         self_attention_outputs = self.self_attention(
             hidden_states,
             attention_mask,
             head_mask,
             output_attentions=output_attentions,
-            past_key_value=self_past_key_value
+            past_key_value=self_past_key_value,
         )
         attention_output = self_attention_outputs[0]
         outputs = self_attention_outputs[1:]  # e.g. attention_probs, (past_key_value)...
 
-        # # (2) Optional cross-attention if kv_hidden_states given
-        # if kv_hidden_states is not None:
-        #     cross_attn_out = self.cross_attention(
-        #         attention_output,
-        #         attention_mask=None,
-        #         head_mask=head_mask,
-        #         kv_hidden_states=kv_hidden_states,
-        #         kv_attention_mask=kv_attention_mask,
-        #         output_attentions=output_attentions,
-        #     )
-        #     attention_output = cross_attn_out[0]
-        #     # You could handle more outputs here if desired.
-
-        # (2) Feed-forward
+        # Feed-forward
         layer_output = self.ffn(attention_output)
         return (layer_output,) + outputs
-
 
 
 class TransformerProjector(nn.Module):
@@ -206,52 +190,46 @@ class TransformerProjector(nn.Module):
         super().__init__()
         self.config = config if config is not None else Config()
 
-        # Main Transformer layers (self-attention for the input + memory tokens)
+        # Main Transformer layers
         self.layers = nn.ModuleList(
             [TransformerLayer(self.config) for _ in range(self.config.depth)]
         )
 
-        # NEW cross-attention layer for memory retrieval
+        # Cross-attention layer for memory retrieval
         self.memory_retrieval_attention = Attention(self.config)
 
         self.num_memory_tokens = self.config.num_memory_tokens
         self.hidden_size = self.config.mm_hidden_size
         self.patch_size = self.config.patch_size
 
-        # The "initial" memory tokens (m0): shape (n, patch, d).
-        # self.initial_memory = nn.Parameter(
-        #     torch.randn(self.num_memory_tokens, self.patch_size, self.hidden_size)
-        # )
+        # Define initial memory (uninitialized)
+        self.initial_memory = nn.Parameter(
+            torch.empty(
+                self.num_memory_tokens, self.patch_size, self.hidden_size,
+                dtype=self.config.mm_dtype
+            )
+        )
 
-        # This will store all previous memory tokens across calls
+        # Will store previous memory tokens across calls
         self.memory_cache: List[torch.Tensor] = []
 
-    def _update_memory_tokens_with_cache(
-        self,
-        current_memory: torch.Tensor
-    ) -> torch.Tensor:
+    def _update_memory_tokens_with_cache(self, current_memory: torch.Tensor) -> torch.Tensor:
         """
-        Given current memory tokens mᵢ of shape (n, patch, d),
-        do one cross-attention step with all memory_cache as K/V to get mᵢ₊₁.
+        Cross-attend current_memory to entire memory_cache to produce updated memory.
         """
         if len(self.memory_cache) == 0:
-            # No previous memory: just return the current memory as-is
+            # No previous memory
             return current_memory
 
-        # Combine all previous memory tokens into a single large tensor
-        # Suppose each item in memory_cache is shape (n, patch, d).
-        # We'll cat them on dim=0 => shape (N*n, patch, d).
         past_memory = torch.cat(self.memory_cache, dim=0).unsqueeze(0)  # (1, N*n, patch, d)
-        query_mem = current_memory.unsqueeze(0)  # (1, n, patch, d)
+        query_mem = current_memory.unsqueeze(0)                         # (1, n, patch, d)
 
-        # Flatten the "patch" dimension into the sequence dimension for standard attention
-        B, Lq, P, D = query_mem.shape  # B=1, Lq=n, P=patch, D=hidden
+        B, Lq, P, D = query_mem.shape
         query_2d = query_mem.view(B, Lq * P, D)
 
-        B2, Lk, Pk, D2 = past_memory.shape  # B2=1, Lk=N*n, Pk=patch
+        B2, Lk, Pk, D2 = past_memory.shape
         keyval_2d = past_memory.view(B2, Lk * Pk, D2)
 
-        # Use the dedicated cross-attention layer
         cross_attn_out = self.memory_retrieval_attention(
             hidden_states=query_2d,
             kv_hidden_states=keyval_2d,
@@ -259,11 +237,10 @@ class TransformerProjector(nn.Module):
             head_mask=None,
             output_attentions=False
         )
-        updated_2d = cross_attn_out[0]  # shape (1, Lq*P, D)
+        updated_2d = cross_attn_out[0]  # (1, Lq*P, D)
 
-        # Reshape back to (1, n, patch, d)
         updated_4d = updated_2d.view(B, Lq, P, D)
-        return updated_4d.squeeze(0)  # => (n, patch, d)
+        return updated_4d.squeeze(0)
 
     def forward(
         self,
@@ -272,45 +249,33 @@ class TransformerProjector(nn.Module):
     ):
         """
         image_features: (frames=F, patch=P, dimension=D)
-
-        Steps:
-         1) If memory_cache is empty, start with self.initial_memory; else use the last memory_cache entry.
-         2) Self-retrieval: update them by cross-attending to the entire memory_cache.
-         3) Prepend the updated memory tokens => shape (F+n, P, D).
-         4) Run through {self.depth} layers of self-attention (no mask).
-         5) Split out the first n tokens => new memory tokens.
-         6) Append them to memory_cache, return the rest as “transformed image features.”
+        1) If memory_cache empty, use self.initial_memory. Otherwise, memory_cache[-1].
+        2) Possibly cross-attend memory tokens with the entire memory_cache.
+        3) Prepend memory to image => shape (F+n, P, D).
+        4) Self-attend with `depth` layers.
+        5) Split memory vs image outputs; store memory in cache.
+        6) Return new memory tokens.
         """
         device = image_features.device
         dtype = image_features.dtype
 
-        # (1) Decide what your "current memory" is:
+        # (1) Decide memory
         if len(self.memory_cache) == 0:
-            # First call: use initial_memory
-            # current_memory = self.initial_memory.to(device=device, dtype=dtype)
-            current_memory = nn.Parameter(
-                torch.randn(self.num_memory_tokens, self.patch_size, self.hidden_size).to(device=device, dtype=dtype)
-            )
-            if torch.isnan(current_memory).any():
-                raise ValueError("NaNs detected in current_memory!")
+            current_memory = self.initial_memory.to(device=device, dtype=dtype)
         else:
-            # Later calls: use last updated memory from memory_cache
             current_memory = self.memory_cache[-1].to(device=device, dtype=dtype)
+
+        # (2) Cross-attention if we have >1 memory blocks
         if len(self.memory_cache) > 1:
-            print("Memory cache length:", len(self.memory_cache))
-            # (2) Cross-attention update with entire memory_cache
             current_memory = self._update_memory_tokens_with_cache(current_memory)
 
-        # (3) Prepend memory to new image features => shape (F+n, P, D)
+        # (3) Prepend memory
         combined = torch.cat([current_memory, image_features], dim=0)
-        if torch.isnan(combined).any():
-            raise ValueError("NaNs detected in combined!")
-        # Insert a batch dimension (B=1), then flatten patch into sequence for self-attn
         combined = combined.unsqueeze(0)  # => (1, F+n, P, D)
         B, L, P_, D_ = combined.shape
-        combined_2d = combined.view(B, L * P_, D_)  # => (1, (F+n)*P, D)
+        combined_2d = combined.view(B, L * P_, D_)
 
-        # (4) Pass through self.depth layers of self-attention
+        # (4) Self-attention through each layer
         hidden_states = combined_2d
         for i, layer in enumerate(self.layers):
             layer_head_mask = head_mask[i] if (head_mask is not None) else None
@@ -322,38 +287,63 @@ class TransformerProjector(nn.Module):
                 kv_attention_mask=None,
                 output_attentions=False,
             )
-            hidden_states = layer_outputs[0]  # (1, (F+n)*P, D)
+            hidden_states = layer_outputs[0]
 
-        if torch.isnan(hidden_states).any():
-            raise ValueError("NaNs detected in hidden_states!")
+        # (5) Reshape, split memory vs. image
+        hidden_4d = hidden_states.view(B, L, P_, D_)
+        new_memory_tokens = hidden_4d[:, : self.num_memory_tokens, :, :]  # => (1, n, P, D)
+        updated_image_features = hidden_4d[:, self.num_memory_tokens :, :, :]  # => (1, F, P, D)
 
-        # (5) Reshape back, split out memory vs. image
-        hidden_4d = hidden_states.view(B, L, P_, D_)  # => (1, F+n, P, D)
-        new_memory_tokens = hidden_4d[:, :self.num_memory_tokens, :, :]  # => (1, n, P, D)
-        updated_image_features = hidden_4d[:, self.num_memory_tokens:, :, :]  # => (1, F, P, D)
-
-        # (6) Save the new memory tokens to memory_cache for next time
+        # (6) Cache new memory tokens
         self.memory_cache.append(new_memory_tokens.squeeze(0).detach())
 
-        # Return just the updated image portion
+        # Return new memory tokens (or updated image if you prefer)
         return new_memory_tokens.squeeze(0)
 
+    #
+    # Optional initialization function:
+    #
+    def init_weights_(self):
+        """
+        Optional: Call this after you've placed the model on a real device
+        (CPU/GPU) if you want to random-initialize everything.
+        """
+        for name, param in self.named_parameters():
+            # Check if param is still on meta
+            if param.device.type == "meta":
+                raise RuntimeError(
+                    f"Parameter {name} is on meta. Move model to a real device before init."
+                )
+
+            # Example default init
+            if param.dim() > 1:
+                nn.init.xavier_normal_(param)
+            else:
+                nn.init.zeros_(param)
+
 
 #
-# EXAMPLE USAGE
+# EXAMPLE USAGE (no explicit "meta" mention here):
 #
 if __name__ == "__main__":
+    # 1) Create config
     config = Config()
+
+    # 2) Instantiate the model (where you place it on "meta" or real device is up to you)
     proj = TransformerProjector(config)
 
-    # Suppose we have input image_features with shape (F=4, P=729, D=1152)
-    dummy_input = torch.randn(10, 729, 1152).to(dtype=torch.float16)
+    # Example: move the model to CPU
+    proj.to("cpu")
 
+    # 3) Initialize weights on CPU
+    proj.init_weights_()
+
+    # 4) Forward pass with dummy data
+    dummy_input = torch.randn(10, 729, 1152, dtype=torch.float16, device="cpu")
     out = proj(dummy_input)
-    print("Output shape after first call:", out.shape)  # => (8, 729, 1152)
+    print("Output shape after first call:", out.shape)
 
-    # Now the cache has 1 set of memory tokens.
-    # Next time, we use the memory_cache[-1] from the last pass, not the initial_memory.
-    dummy_input2 = torch.randn(12, 729, 1152)
+    # Another pass
+    dummy_input2 = torch.randn(12, 729, 1152, dtype=torch.float16, device="cpu")
     out2 = proj(dummy_input2)
-    print("Output shape after second call:", out2.shape)  # => (8, 729, 1152)
+    print("Output shape after second call:", out2.shape)
