@@ -218,9 +218,9 @@ class TransformerProjector(nn.Module):
         self.patch_size = self.config.patch_size
 
         # The "initial" memory tokens (m0): shape (n, patch, d).
-        self.initial_memory = nn.Parameter(
-            torch.randn(self.num_memory_tokens, self.patch_size, self.hidden_size)
-        )
+        # self.initial_memory = nn.Parameter(
+        #     torch.randn(self.num_memory_tokens, self.patch_size, self.hidden_size)
+        # )
 
         # This will store all previous memory tokens across calls
         self.memory_cache: List[torch.Tensor] = []
@@ -286,7 +286,10 @@ class TransformerProjector(nn.Module):
         # (1) Decide what your "current memory" is:
         if len(self.memory_cache) == 0:
             # First call: use initial_memory
-            current_memory = self.initial_memory.to(device=device, dtype=dtype)
+            # current_memory = self.initial_memory.to(device=device, dtype=dtype)
+            current_memory = nn.Parameter(
+                torch.randn(self.num_memory_tokens, self.patch_size, self.hidden_size)
+            )
             if torch.isnan(current_memory).any():
                 raise ValueError("NaNs detected in current_memory!")
         else:
