@@ -399,8 +399,8 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 # print(f"Segment memory : {[x.shape for x in segment_memory if x is not None]}")
                 # torch.cuda.synchronize()
                 # print("After attention_model forward pass")
-                if torch.isnan(recurrent_memory).any():
-                    raise ValueError("NaNs detected in recurrent_memory!")
+                #if torch.isnan(recurrent_memory).any():
+                #    raise ValueError("NaNs detected in recurrent_memory!")
                 cat_segment_memory = torch.cat([image for image in segment_memories], dim=0)
                 if recurrent_memory is not None:
                     cat_segment_memory = torch.cat([cat_segment_memory, recurrent_memory], dim=0)
