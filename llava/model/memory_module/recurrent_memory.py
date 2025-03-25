@@ -266,6 +266,7 @@ class TransformerProjector(nn.Module):
 
         # (2) Cross-attention if we have >1 memory blocks
         if len(self.memory_cache) > 1:
+            print(f"recurrent memory cache: {len(self.memory_cache)}")
             current_memory = self._update_memory_tokens_with_cache(current_memory)
 
         # (3) Prepend memory
