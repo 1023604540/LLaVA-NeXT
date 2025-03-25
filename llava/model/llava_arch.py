@@ -103,11 +103,11 @@ class LlavaMetaModel:
         compress_Turing_hidden_dim = getattr(config, "compress_Turing_hidden_dim", 32)
         # Now initiate the memory_builder
         self.attention_model = NeuralTuringMachine(self.mm_input_dim, compress_Turing_hidden_dim).to(self.device)
-        # self.memory_mlp = nn.Sequential(
-        #     nn.Linear(1152, 1152),
-        #     nn.GELU(),
-        #     nn.Linear(1152, 1152),
-        # ).to(self.device)
+        self.memory_mlp = nn.Sequential(
+            nn.Linear(1152, 1152),
+            nn.GELU(),
+            nn.Linear(1152, 1152),
+        ).to(self.device)
         self.recurrent_memory_transformer = TransformerProjector().to(self.device)
 
     def get_vision_tower(self):
