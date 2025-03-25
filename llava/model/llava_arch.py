@@ -99,10 +99,8 @@ class LlavaMetaModel:
             if "unpad" in getattr(config, "mm_patch_merge_type", ""):
                 self.image_newline = nn.Parameter(torch.empty(config.hidden_size, dtype=self.dtype))
 
-        self.mm_input_dim = getattr(config, "ntm_hidden_size", 1152)
-        compress_Turing_hidden_dim = getattr(config, "compress_Turing_hidden_dim", 32)
         # Now initiate the memory_builder
-        self.attention_model = NeuralTuringMachine(self.mm_input_dim, compress_Turing_hidden_dim).to(self.device)
+        self.attention_model = NeuralTuringMachine().to(self.device)
         self.memory_mlp = nn.Sequential(
             nn.Linear(1152, 1152),
             nn.GELU(),
@@ -395,8 +393,8 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     segment_memory = self.compress_temporal_features([image_segment], video_idx_in_batch, all_video=True)
                     segment_memories += segment_memory
                     assert len(segment_memory) == 1
-                    recurrent_memory = recurrent_model(segment_memory[0])
-                    print(f"Recurrent memory shape : {recurrent_memory.shape}")
+                    #recurrent_memory = recurrent_model(segment_memory[0])
+                    #print(f"Recurrent memory shape : {recurrent_memory.shape}")
 
                 # print(f"Segment memory : {[x.shape for x in segment_memory if x is not None]}")
                 # torch.cuda.synchronize()
