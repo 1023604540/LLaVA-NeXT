@@ -137,7 +137,7 @@ class TransformerLayer(nn.Module):
         super().__init__()
 
         self.self_attention = Attention(config)
-        self.cross_attention = Attention(config)
+        # self.cross_attention = Attention(config)
 
         self.mlp = nn.Sequential(
             nn.Linear(config.mm_hidden_size, config.mm_intermediate_size, dtype=config.mm_dtype),
@@ -182,20 +182,20 @@ class TransformerLayer(nn.Module):
         attention_output = self_attention_outputs[0]
         outputs = self_attention_outputs[1:]  # e.g. attention_probs, (past_key_value)...
 
-        # (2) Optional cross-attention if kv_hidden_states given
-        if kv_hidden_states is not None:
-            cross_attn_out = self.cross_attention(
-                attention_output,
-                attention_mask=None,
-                head_mask=head_mask,
-                kv_hidden_states=kv_hidden_states,
-                kv_attention_mask=kv_attention_mask,
-                output_attentions=output_attentions,
-            )
-            attention_output = cross_attn_out[0]
-            # You could handle more outputs here if desired.
+        # # (2) Optional cross-attention if kv_hidden_states given
+        # if kv_hidden_states is not None:
+        #     cross_attn_out = self.cross_attention(
+        #         attention_output,
+        #         attention_mask=None,
+        #         head_mask=head_mask,
+        #         kv_hidden_states=kv_hidden_states,
+        #         kv_attention_mask=kv_attention_mask,
+        #         output_attentions=output_attentions,
+        #     )
+        #     attention_output = cross_attn_out[0]
+        #     # You could handle more outputs here if desired.
 
-        # (3) Feed-forward
+        # (2) Feed-forward
         layer_output = self.ffn(attention_output)
         return (layer_output,) + outputs
 
