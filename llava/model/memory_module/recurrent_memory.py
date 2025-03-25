@@ -302,7 +302,8 @@ class TransformerProjector(nn.Module):
 
         # (3) Prepend memory to new image features => shape (F+n, P, D)
         combined = torch.cat([current_memory, image_features], dim=0)
-
+        if torch.isnan(combined).any():
+            raise ValueError("NaNs detected in combined!")
         # Insert a batch dimension (B=1), then flatten patch into sequence for self-attn
         combined = combined.unsqueeze(0)  # => (1, F+n, P, D)
         B, L, P_, D_ = combined.shape
