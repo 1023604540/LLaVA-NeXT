@@ -108,7 +108,7 @@ class LlavaMetaModel:
             nn.GELU(),
             nn.Linear(1152, 1152),
         ).to(self.device)
-        self.recurrent_memory_transformer = TransformerProjector().to(self.device)
+        self.recurrent_memory_transformer = TransformerProjector()
 
     def get_vision_tower(self):
         vision_tower = getattr(self, "vision_tower", None)
