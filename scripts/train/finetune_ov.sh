@@ -36,7 +36,8 @@ echo "MID_RUN_NAME: ${RUN_NAME}"
 NUM_GPUS=4
 NNODES=$SLURM_NNODES
 RANK=$SLURM_PROCID
-MASTER_ADDR=$(hostname -s)
+MASTER_NODE=$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n1)
+MASTER_ADDR=$(host $MASTER_NODE | awk '{print $NF}')
 MASTER_PORT=40032
 
 
@@ -45,16 +46,19 @@ export MASTER_PORT
 
 echo "[RANK $RANK] MASTER_ADDR=$MASTER_ADDR, MASTER_PORT=$MASTER_PORT"
 
+# 主节点启动临时监听（调试用）
+if [ $(hostname) == "$MASTER_NODE" ]; then
+  echo "===== Master node $MASTER_ADDR starting listener ====="
+  nc -klv $MASTER_ADDR $MASTER_PORT &
+  sleep 10  # 确保监听启动
+fi
+
 # 网络连通性测试（关键调试步骤）
 echo "===== Testing connectivity to $MASTER_ADDR:$MASTER_PORT ====="
 srun --export=ALL \
      --ntasks=$SLURM_NNODES \
      --ntasks-per-node=1 \
      bash -c 'echo "$(hostname) connection test: $(nc -zv -w 5 $MASTER_ADDR $MASTER_PORT 2>&1)"'
-
-# 添加随机等待防止端口冲突
-sleep $(( SLURM_NODEID * 2 + 5 ))
-
 
 srun --mpi=pmi2 --cpu-bind=none \
 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NNODES}" --node_rank="${RANK}" --master_addr="${MASTER_ADDR}" --master_port="${MASTER_PORT}" \
