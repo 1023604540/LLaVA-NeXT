@@ -108,7 +108,7 @@ class LlavaMetaModel:
             nn.GELU(),
             nn.Linear(1152, 1152),
         ).to(self.device)
-        self.recurrent_memory_transformer = TransformerProjector()
+        self.recurrent_memory_transformer = TransformerProjector().to("cpu")
 
     def get_vision_tower(self):
         vision_tower = getattr(self, "vision_tower", None)
@@ -380,6 +380,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
 
                 segment_memories = []
                 recurrent_memory = None
+                recurrent_model = self.get_model().recurrent_memory_transformer.to(self.device)
                 encoded_features = self.encode_images(image)
                 # print(f"Encoded features shape : {encoded_features.shape}, {encoded_features[0].shape}")
                 encoded_features = encoded_features.requires_grad_()
@@ -394,7 +395,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     segment_memory = self.compress_temporal_features([image_segment], video_idx_in_batch, all_video=True)
                     segment_memories += segment_memory
                     assert len(segment_memory) == 1
-                    recurrent_memory = self.get_model().recurrent_memory_transformer(segment_memory[0])
+                    recurrent_memory = recurrent_model(segment_memory[0])
                     print(f"Recurrent memory shape : {recurrent_memory.shape}")
 
                 # print(f"Segment memory : {[x.shape for x in segment_memory if x is not None]}")
