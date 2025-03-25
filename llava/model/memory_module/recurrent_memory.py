@@ -50,6 +50,7 @@ class Attention(nn.Module):
         assert config.mm_hidden_size % config.mm_num_attention_heads == 0
 
         self.k_proj = nn.Linear(config.mm_hidden_size, config.mm_hidden_size, dtype=config.mm_dtype)
+        print(config.mm_dtype)
         self.v_proj = nn.Linear(config.mm_hidden_size, config.mm_hidden_size, dtype=config.mm_dtype)
         self.q_proj = nn.Linear(config.mm_hidden_size, config.mm_hidden_size, dtype=config.mm_dtype)
         self.dropout = nn.Dropout(config.mm_attention_probs_dropout_prob)
@@ -346,7 +347,7 @@ if __name__ == "__main__":
     proj = TransformerProjector(config)
 
     # Suppose we have input image_features with shape (F=4, P=729, D=1152)
-    dummy_input = torch.randn(10, 729, 1152)
+    dummy_input = torch.randn(10, 729, 1152).to(dtype=torch.float16)
 
     out = proj(dummy_input)
     print("Output shape after first call:", out.shape)  # => (8, 729, 1152)
