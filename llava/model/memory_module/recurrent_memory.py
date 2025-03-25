@@ -286,7 +286,7 @@ class TransformerProjector(nn.Module):
         # (1) Decide what your "current memory" is:
         if len(self.memory_cache) == 0:
             # First call: use initial_memory
-            current_memory = self.initial_memory.to(device=device, dtype=dtype)
+            current_memory = self.initial_memory.to(device=device, dtype=dtype).to("cuda")
             if torch.isnan(current_memory).any():
                 raise ValueError("NaNs detected in current_memory!")
         else:
