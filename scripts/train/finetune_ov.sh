@@ -36,7 +36,7 @@ echo "MID_RUN_NAME: ${RUN_NAME}"
 NUM_GPUS=4
 NNODES=$SLURM_NNODES
 RANK=$SLURM_PROCID
-MASTER_ADDR=$(scontrol show node hkn0409 | grep NodeAddr | awk '{print $1}' | cut -d= -f2)
+MASTER_ADDR=$(hostname -s)
 MASTER_PORT=40032
 
 
