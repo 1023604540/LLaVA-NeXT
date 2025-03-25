@@ -99,16 +99,16 @@ class LlavaMetaModel:
             if "unpad" in getattr(config, "mm_patch_merge_type", ""):
                 self.image_newline = nn.Parameter(torch.empty(config.hidden_size, dtype=self.dtype))
 
-        self.mm_input_dim = getattr(config, "ntm_hidden_size", 1152)
-        compress_Turing_hidden_dim = getattr(config, "compress_Turing_hidden_dim", 32)
+        # self.mm_input_dim = getattr(config, "ntm_hidden_size", 1152)
+        # compress_Turing_hidden_dim = getattr(config, "compress_Turing_hidden_dim", 32)
         # Now initiate the memory_builder
         self.attention_model = NeuralTuringMachine(self.mm_input_dim, compress_Turing_hidden_dim).to(self.device)
-        self.memory_mlp = nn.Sequential(
-            nn.Linear(1152, 1152),
-            nn.GELU(),
-            nn.Linear(1152, 1152),
-        ).to(self.device)
-        self.recurrent_memory_transformer = TransformerProjector().to("cpu")
+        # self.memory_mlp = nn.Sequential(
+        #     nn.Linear(1152, 1152),
+        #     nn.GELU(),
+        #     nn.Linear(1152, 1152),
+        # ).to(self.device)
+        self.recurrent_memory_transformer = TransformerProjector().to(self.device)
 
     def get_vision_tower(self):
         vision_tower = getattr(self, "vision_tower", None)

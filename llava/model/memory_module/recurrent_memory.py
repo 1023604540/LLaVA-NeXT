@@ -287,7 +287,6 @@ class TransformerProjector(nn.Module):
         if len(self.memory_cache) == 0:
             # First call: use initial_memory
             current_memory = self.initial_memory.to(device=device, dtype=dtype)
-            current_memory = torch.randn(self.num_memory_tokens, self.patch_size, self.hidden_size, dtype=self.config.mm_dtype, device=device)
             if torch.isnan(current_memory).any():
                 raise ValueError("NaNs detected in current_memory!")
         else:
