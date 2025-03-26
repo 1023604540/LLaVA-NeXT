@@ -52,24 +52,24 @@ export MASTER_PORT=$(shuf -i 49152-65535 -n 1)  # IANA动态端口范围
 echo "[RANK $RANK] MASTER_ADDR=$MASTER_ADDR, MASTER_PORT=$MASTER_PORT"
 
 
-# ----------- 网络预检 -----------
-if [ $SLURM_PROCID -eq 0 ]; then
-  echo "===== 主节点网络信息 ====="
-  ip -4 addr show ib0 | grep inet
-  ip -4 addr show bond0 | grep inet
-  echo "监听端口：$MASTER_ADDR:$MASTER_PORT"
-  nc -klv $MASTER_ADDR $MASTER_PORT &
-  sleep 10
-fi
-
-# ----------- 多节点连通性测试 -----------
-srun --export=ALL \
-  bash -c 'echo -n "$(hostname -s): " && \
-  if nc -zv -w 5 $MASTER_ADDR $MASTER_PORT; then \
-    echo "✅ 连接成功"; \
-  else \
-    echo "❌ 连接失败"; \
-  fi'
+## ----------- 网络预检 -----------
+#if [ $SLURM_PROCID -eq 0 ]; then
+#  echo "===== 主节点网络信息 ====="
+#  ip -4 addr show ib0 | grep inet
+#  ip -4 addr show bond0 | grep inet
+#  echo "监听端口：$MASTER_ADDR:$MASTER_PORT"
+#  nc -klv $MASTER_ADDR $MASTER_PORT &
+#  sleep 10
+#fi
+#
+## ----------- 多节点连通性测试 -----------
+#srun --export=ALL \
+#  bash -c 'echo -n "$(hostname -s): " && \
+#  if nc -zv -w 5 $MASTER_ADDR $MASTER_PORT; then \
+#    echo "✅ 连接成功"; \
+#  else \
+#    echo "❌ 连接失败"; \
+#  fi'
 
 srun --mpi=pmi2 --cpu-bind=none \
 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NNODES}" --node_rank="${RANK}" --master_addr="${MASTER_ADDR}" --master_port="${MASTER_PORT}" \
