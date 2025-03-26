@@ -1,20 +1,20 @@
-export OMP_NUM_THREADS=8
-export NCCL_IB_DISABLE=0
-export NCCL_SOCKET_IFNAME=ib0
-export GLOO_SOCKET_IFNAME=ib0
-
-export NCCL_TIMEOUT=3600  # 1 hour
-export TORCH_NCCL_TRACE_BUFFER_SIZE=33554432
-export TORCH_DISTRIBUTED_DEBUG=DETAIL
-
-export NCCL_DEBUG=INFO
-export NCCL_DEBUG_SUBSYS=INIT,NET
-export NCCL_NET_GDR_LEVEL=PHB  # 对IB网络优化
-export NCCL_IB_TIMEOUT=23
-export NCCL_IB_RETRY_CNT=7
-
-export WANDB_API_KEY="638aa591e9881cd840eb171df3f625bcd7613d14"
-
+#export OMP_NUM_THREADS=8
+#export NCCL_IB_DISABLE=0
+#export NCCL_SOCKET_IFNAME=ib0
+#export GLOO_SOCKET_IFNAME=ib0
+#
+#export NCCL_TIMEOUT=3600  # 1 hour
+#export TORCH_NCCL_TRACE_BUFFER_SIZE=33554432
+#export TORCH_DISTRIBUTED_DEBUG=DETAIL
+#
+#export NCCL_DEBUG=INFO
+#export NCCL_DEBUG_SUBSYS=INIT,NET
+#export NCCL_NET_GDR_LEVEL=PHB  # 对IB网络优化
+#export NCCL_IB_TIMEOUT=23
+#export NCCL_IB_RETRY_CNT=7
+#
+#export WANDB_API_KEY="638aa591e9881cd840eb171df3f625bcd7613d14"
+#
 
 
 LLM_VERSION="Qwen/Qwen2-7B-Instruct"
@@ -69,7 +69,7 @@ echo "[RANK $RANK] MASTER_ADDR=$MASTER_ADDR, MASTER_PORT=$MASTER_PORT"
 #  else \
 #    echo "❌ 连接失败"; \
 #  fi'
-ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NNODES}" --node_rank="${RANK}" --master_addr="${MASTER_ADDR}" --master_port="${MASTER_PORT}" \
+srun torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NNODES}" --node_rank="${RANK}" --master_addr="${MASTER_ADDR}" --master_port="${MASTER_PORT}" \
     test_dist.py \
 
 
