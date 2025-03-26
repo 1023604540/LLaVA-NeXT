@@ -69,6 +69,10 @@ echo "[RANK $RANK] MASTER_ADDR=$MASTER_ADDR, MASTER_PORT=$MASTER_PORT"
 #  else \
 #    echo "❌ 连接失败"; \
 #  fi'
+srun --mpi=pmi2 --cpu-bind=none \
+torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NNODES}" --node_rank="${RANK}" --master_addr="${MASTER_ADDR}" --master_port="${MASTER_PORT}" \
+    test_dist.py \
+
 
 srun --mpi=pmi2 --cpu-bind=none \
 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NNODES}" --node_rank="${RANK}" --master_addr="${MASTER_ADDR}" --master_port="${MASTER_PORT}" \
