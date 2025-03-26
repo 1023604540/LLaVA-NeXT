@@ -39,7 +39,7 @@ RANK=$SLURM_PROCID
 MASTER_NODE=$(scontrol show hostnames "$SLURM_NODELIST" | head -n 1)
 MASTER_ADDR="${MASTER_NODE}"
 
-MASTER_PORT=40032
+MASTER_PORT=12345
 
 
 export MASTER_ADDR
@@ -47,12 +47,6 @@ export MASTER_PORT
 
 echo "[RANK $RANK] MASTER_ADDR=$MASTER_ADDR, MASTER_PORT=$MASTER_PORT"
 
-# 主节点启动临时监听（调试用）
-if [ $(hostname) == "$MASTER_NODE" ]; then
-  echo "===== Master node $MASTER_ADDR starting listener ====="
-  nc -klv $MASTER_ADDR $MASTER_PORT &
-  sleep 10  # 确保监听启动
-fi
 
 # 网络连通性测试（关键调试步骤）
 echo "===== Testing connectivity to $MASTER_ADDR:$MASTER_PORT ====="
