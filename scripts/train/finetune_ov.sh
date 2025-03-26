@@ -1,11 +1,18 @@
 export OMP_NUM_THREADS=8
 export NCCL_IB_DISABLE=0
 export NCCL_SOCKET_IFNAME=ib0
-export NCCL_DEBUG=DEBUG
-export NCCL_DEBUG_SUBSYS=ALL
+
+export GLOO_SOCKET_IFNAME=bond0
+
 export NCCL_TIMEOUT=3600  # 1 hour
 export TORCH_NCCL_TRACE_BUFFER_SIZE=33554432
 export TORCH_DISTRIBUTED_DEBUG=DETAIL
+
+export NCCL_DEBUG=INFO
+export NCCL_DEBUG_SUBSYS=INIT,NET
+export NCCL_NET_GDR_LEVEL=PHB  # 对IB网络优化
+export NCCL_IB_TIMEOUT=23
+export NCCL_IB_RETRY_CNT=7
 
 export WANDB_API_KEY="638aa591e9881cd840eb171df3f625bcd7613d14"
 
@@ -36,20 +43,33 @@ echo "MID_RUN_NAME: ${RUN_NAME}"
 NUM_GPUS=4
 NNODES=$SLURM_NNODES
 RANK=$SLURM_PROCID
-MASTER_NODE=$(scontrol show hostnames "$SLURM_NODELIST" | head -n 1)
-MASTER_ADDR="${MASTER_NODE}"
 
-MASTER_PORT=12345
+MASTER_NODE=$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n1)
+export MASTER_ADDR=$(getent hosts $MASTER_NODE | awk '{print $1}')
+export MASTER_PORT=$(shuf -i 49152-65535 -n 1)  # IANA动态端口范围
+
 
 echo "[RANK $RANK] MASTER_ADDR=$MASTER_ADDR, MASTER_PORT=$MASTER_PORT"
 
 
-# 网络连通性测试（关键调试步骤）
-echo "===== Testing connectivity to $MASTER_ADDR:$MASTER_PORT ====="
+# ----------- 网络预检 -----------
+if [ $SLURM_PROCID -eq 0 ]; then
+  echo "===== 主节点网络信息 ====="
+  ip -4 addr show ib0 | grep inet
+  ip -4 addr show bond0 | grep inet
+  echo "监听端口：$MASTER_ADDR:$MASTER_PORT"
+  nc -klv $MASTER_ADDR $MASTER_PORT &
+  sleep 10
+fi
+
+# ----------- 多节点连通性测试 -----------
 srun --export=ALL \
-     --ntasks=$SLURM_NNODES \
-     --ntasks-per-node=1 \
-     bash -c 'echo "$(hostname) connection test: $(nc -zv -w 5 $MASTER_ADDR $MASTER_PORT 2>&1)"'
+  bash -c 'echo -n "$(hostname -s): " && \
+  if nc -zv -w 5 $MASTER_ADDR $MASTER_PORT; then \
+    echo "✅ 连接成功"; \
+  else \
+    echo "❌ 连接失败"; \
+  fi'
 
 srun --mpi=pmi2 --cpu-bind=none \
 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NNODES}" --node_rank="${RANK}" --master_addr="${MASTER_ADDR}" --master_port="${MASTER_PORT}" \
