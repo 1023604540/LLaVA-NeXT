@@ -73,7 +73,7 @@ echo "[RANK $RANK] MASTER_ADDR=$MASTER_ADDR, MASTER_PORT=$MASTER_PORT"
 srun --mpi=pmi2 --cpu-bind=none \
 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NNODES}" --node_rank="${RANK}" --master_addr="${MASTER_ADDR}" --master_port="${MASTER_PORT}" \
     llava/train/train_mem.py \
-    --deepspeed scripts/zero3.json \
+    --deepspeed scripts/zero2.json \
     --model_name_or_path $PREV_STAGE_CHECKPOINT \
     --version $PROMPT_VERSION \
     --data_path /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/LLaVA-NeXT/scripts/train/video_datasets.yaml \
