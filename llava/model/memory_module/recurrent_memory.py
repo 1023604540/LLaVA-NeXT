@@ -16,7 +16,7 @@ class Config:
     mm_layer_norm_eps = 1e-12  # LayerNorm epsilon
     mm_hidden_dropout_prob = 0.1  # Residual dropout
     mm_intermediate_size = 4096  # Feedforward hidden layer size
-    num_memory_tokens = 8  # Number of memory tokens
+    num_memory_tokens = 4  # Number of memory tokens
     depth = 1  # Number of Transformer layers
     mm_dtype = torch.float16
 

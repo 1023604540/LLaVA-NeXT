@@ -405,8 +405,8 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 if recurrent_memory is not None:
                     cat_segment_memory = torch.cat([cat_segment_memory, recurrent_memory], dim=0)
                 rank0_print(f"cat_segment_memory shape : {cat_segment_memory.shape}")
-                # if torch.isnan(cat_segment_memory).any():
-                #     raise ValueError("NaNs detected in attention_model output!")
+                if torch.isnan(cat_segment_memory).any():
+                    raise ValueError("NaNs detected in attention_model output!")
                 # rank0_print(f"cat_segment_memory shape : {cat_segment_memory.shape}")
                 # rank0_print(
                 #     f"[attention_model] output requires_grad={cat_segment_memory.requires_grad}, grad_fn={cat_segment_memory.grad_fn}")

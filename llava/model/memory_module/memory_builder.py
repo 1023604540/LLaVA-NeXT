@@ -106,7 +106,7 @@ class MultimodalOpsMixin:
         """
         video_long_memory_length = getattr(self.config, "video_long_memory_length", 3)
         video_Turing_memory_length = getattr(self.config, "video_Turing_memory_length", 3)
-        video_current_memory_length = getattr(self.config, "video_current_memory_length", 1)
+        video_current_memory_length = getattr(self.config, "video_current_memory_length", 0)
         compress_long_memory_size = getattr(self.config, "compress_long_memory_size", 27)
         compress_Turing_memory_size = getattr(self.config, "compress_Turing_memory_size", 27)
         compress_Turing_update_ratio = getattr(self.config, "compress_Turing_update_ratio", 0.2)
