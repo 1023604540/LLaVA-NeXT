@@ -204,10 +204,9 @@ class TransformerProjector(nn.Module):
 
         # Define initial memory (uninitialized)
         self.initial_memory = nn.Parameter(
-            torch.randn(
-                self.num_memory_tokens, self.patch_size, self.hidden_size
-            )
+            torch.empty(self.num_memory_tokens, self.patch_size, self.hidden_size)
         )
+        nn.init.xavier_uniform_(self.initial_memory)
 
         # Will store previous memory tokens across calls
         self.memory_cache: List[torch.Tensor] = []
