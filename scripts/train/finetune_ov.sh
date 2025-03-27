@@ -40,7 +40,8 @@ echo "MID_RUN_NAME: ${RUN_NAME}"
 
 NUM_GPUS=4
 NNODES=$SLURM_NNODES
-RANK=$SLURM_PROCID
+#RANK=$SLURM_PROCID
+RANK=$SLURM_NODEID
 
 MASTER_NODE=$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n1)
 export MASTER_ADDR=$(getent hosts $MASTER_NODE | awk '{print $1}')
