@@ -379,6 +379,8 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 segment_memories = []
                 recurrent_memory = None
                 recurrent_model = self.get_model().recurrent_memory_transformer.to(self.device)
+                # Clear the memory cache to avoid memory leak across videos
+                recurrent_model.memory_cache = []
                 encoded_features = self.encode_images(image)
                 # print(f"Encoded features shape : {encoded_features.shape}, {encoded_features[0].shape}")
                 encoded_features = encoded_features.requires_grad_()
