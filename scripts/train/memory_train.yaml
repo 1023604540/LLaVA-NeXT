@@ -1,8 +1,8 @@
 datasets:
-  - json_path: /anvme/workspace/b232dd21-zyr/llava-instruct/real_vision_flan/0_30_s_academic_oe_v0_1_qa_processed.json # will be released in next version of LLaVA-NeXT-Video
+  - json_path: /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/llava-video/metadata/0_30_s_academic_oe_v0_1_qa_processed.json # will be released in next version of LLaVA-NeXT-Video
     sampling_strategy: all
-  - json_path: /anvme/workspace/b232dd21-zyr/llava-instruct/real_vision_flan/0_30_s_academic_v0_1_cap_processed.json # will be released in next version of LLaVA-NeXT-Video
+  - json_path: /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/llava-video/metadata/0_30_s_academic_v0_1_cap_processed.json # will be released in next version of LLaVA-NeXT-Video
     sampling_strategy: all
-  - json_path: /anvme/workspace/b232dd21-zyr/llava-instruct/real_vision_flan/sharegptvideo_qa_255k_processed.json  # json and file do not match
+  - json_path: /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/llava-video/metadata/sharegptvideo_qa_255k_processed.json  # json and file do not match
     sampling_strategy: all
 
