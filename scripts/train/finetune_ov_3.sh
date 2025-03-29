@@ -1,54 +1,63 @@
 export OMP_NUM_THREADS=8
 export NCCL_IB_DISABLE=0
-export NCCL_IB_GID_INDEX=0
 export NCCL_SOCKET_IFNAME=ib0
-export NCCL_DEBUG=DEBUG
-export NCCL_DEBUG_SUBSYS=ALL
-export NCCL_TIMEOUT=3600  # 1 hour
-export TORCH_NCCL_TRACE_BUFFER_SIZE=33554432
+#export GLOO_SOCKET_IFNAME=ib0
+#
+#export NCCL_TIMEOUT=3600  # 1 hour
+#export TORCH_NCCL_TRACE_BUFFER_SIZE=33554432
+#export TORCH_DISTRIBUTED_DEBUG=DETAIL
+#
+#export NCCL_DEBUG=INFO
+#export NCCL_DEBUG_SUBSYS=INIT,NET
+#export NCCL_IB_TIMEOUT=23
+#export NCCL_IB_RETRY_CNT=7
 
 export WANDB_API_KEY="638aa591e9881cd840eb171df3f625bcd7613d14"
 
 
 
-LLM_VERSION="Qwen/Qwen2-7B-Instruct"
-# for 7b model we recommend bs=1, accum=2, 16 nodes, 128 gpus, lr=1e-5, warmup=0.03
-# for 72b model we recommend bs=1, accum=1, 32 nodes, 256 gpus, lr=1e-5, warmup=0.03
+LLM_VERSION="Qwen/Qwen2-0.5B-Instruct"
 LLM_VERSION_CLEAN="${LLM_VERSION//\//_}"
 VISION_MODEL_VERSION="google/siglip-so400m-patch14-384"
 VISION_MODEL_VERSION_CLEAN="${VISION_MODEL_VERSION//\//_}"
 
 ############### Pretrain ################
 
-BASE_RUN_NAME="llavanext-google_siglip-so400m-patch14-384-Qwen_Qwen2-7B-Instruct-mlp2x_gelu-pretrain_blip558k_plain"
+BASE_RUN_NAME="llavanext"
 echo "BASE_RUN_NAME: ${BASE_RUN_NAME}"
 
 ############### Finetune ################
 
 # Stage 2
 PROMPT_VERSION="qwen_1_5"
-RUN_NAME="llava-onevision-${VISION_MODEL_VERSION_CLEAN}-${LLM_VERSION_CLEAN}-memory_adapter_no_compression——2nd"
-PREV_STAGE_CHECKPOINT="/anvme/workspace/b232dd16-LLaVA-OV/checkpoints/llava-onevision-google_siglip-so400m-patch14-384-Qwen_Qwen2-7B-Instruct-memory_adapter_no_compression/checkpoint-15000" # replace it with your last checkpoint training from single image collection
+RUN_NAME="llava-onevision-0.5b-correct_llm_memory_adapter"
+PREV_STAGE_CHECKPOINT="/hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/checkpoints/llava-onevision-qwen2-0.5b-ov" # replace it with your last checkpoint training from single image collection
 echo "PREV_STAGE_CHECKPOINT: ${PREV_STAGE_CHECKPOINT}"
 echo "MID_RUN_NAME: ${RUN_NAME}"
 
-NUM_GPUS=8
+NUM_GPUS=4
 NNODES=$SLURM_NNODES
-RANK=$SLURM_PROCID
-ADDR=$(scontrol show hostname $SLURM_NODELIST | head -n1)  # Master node
-PORT=12346
+#RANK=$SLURM_PROCID
+RANK=$SLURM_NODEID
+
+MASTER_NODE=$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n1)
+export MASTER_ADDR=$(getent hosts $MASTER_NODE | awk '{print $1}')
+export MASTER_PORT=$(shuf -i 49152-65535 -n 1)  # IANA动态端口范围
 
 
+echo "[RANK $RANK] MASTER_ADDR=$MASTER_ADDR, MASTER_PORT=$MASTER_PORT"
 
-ACCELERATE_CPU_AFFINITY=0 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NNODES}" --node_rank="${RANK}" --master_addr="${ADDR}" --master_port="${PORT}" \
+
+srun --mpi=pmix torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NNODES}" --node_rank="${RANK}" --rdzv_backend=c10d \
+    --rdzv_endpoint=${MASTER_ADDR}:${MASTER_PORT} \
     llava/train/train_mem.py \
     --deepspeed scripts/zero2.json \
     --model_name_or_path $PREV_STAGE_CHECKPOINT \
     --version $PROMPT_VERSION \
-    --data_path /home/hpc/b232dd/b232dd16/LLaVA-OV/scripts/train/memory_train.yaml \
-    --image_folder /anvme/workspace/b232dd21-zyr/llava-data \
-    --video_folder /anvme/workspace/b232dd16-LLaVA-OV/llava-video \
-    --mm_tunable_parts="attention_model,mm_mlp_adapter" \
+    --data_path /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/LLaVA-NeXT/scripts/train/video_datasets.yaml \
+    --image_folder /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/llava-video/videos \
+    --video_folder /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/llava-video/videos \
+    --mm_tunable_parts="attention_model,mm_mlp_adapter,mm_language_model" \
     --mm_vision_tower_lr=2e-6 \
     --vision_tower ${VISION_MODEL_VERSION} \
     --mm_projector_type mlp2x_gelu \
@@ -61,9 +70,9 @@ ACCELERATE_CPU_AFFINITY=0 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --mm_patch_merge_type spatial_unpad \
     --bf16 True \
     --run_name $RUN_NAME \
-    --output_dir /anvme/workspace/b232dd16-LLaVA-OV/checkpoints/$RUN_NAME \
+    --output_dir /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/checkpoints/$RUN_NAME \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 1 \
+    --per_device_train_batch_size 2 \
     --per_device_eval_batch_size 4 \
     --gradient_accumulation_steps 2 \
     --evaluation_strategy "no" \
@@ -85,7 +94,7 @@ ACCELERATE_CPU_AFFINITY=0 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --torch_compile_backend "inductor" \
     --dataloader_drop_last True \
     --force_sample True \
-    --frames_upbound 128   # 32 initially
+    --frames_upbound 200   # 32 initially
 exit 0;
 
 # You can delete the sdpa attn_implementation if you want to use flash attn

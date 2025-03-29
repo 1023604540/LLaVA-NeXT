@@ -98,10 +98,8 @@ class LlavaMetaModel:
             if "unpad" in getattr(config, "mm_patch_merge_type", ""):
                 self.image_newline = nn.Parameter(torch.empty(config.hidden_size, dtype=self.dtype))
 
-        self.mm_input_dim = getattr(config, "ntm_hidden_size", 1152)
-        compress_Turing_hidden_dim = getattr(config, "compress_Turing_hidden_dim", 32)
         # Now init in memory_builder
-        self.attention_model = NeuralTuringMachine(self.mm_input_dim, compress_Turing_hidden_dim).to(self.device)
+        self.attention_model = NeuralTuringMachine().to(self.device)
         self.memory_mlp = nn.Sequential(
             nn.Linear(1152, 1152),
             nn.GELU(),
@@ -372,21 +370,13 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     non_video_positions.append(idx)
                     continue
                 boundaries = adjusted_segment(image.mean(dim=1).flatten(1,2))
-                #print(f"boundaries:{len(boundaries)}")
-                #print(f"boundaries:{boundaries}")
 
                 segment_memory = []
                 encoded_features = self.encode_images(image)
-                # print(f"Encoded features shape : {encoded_features.shape}, {encoded_features[0].shape}")
                 encoded_features = encoded_features.requires_grad_()
-                # print(
-                #     f"[DEBUG] Vision output requires_grad={encoded_features.requires_grad}, grad_fn={encoded_features.grad_fn}")
-                # torch.cuda.synchronize()
-                # print("Before attention_model forward pass")
+
                 image_segments = [encoded_features[boundaries[i]:boundaries[i+1]] for i in range(len(boundaries) - 1)]
                 for image_segment in image_segments:
-                    #print(f"Image segment shape : {image_segment.shape}")
-                    #print(f"Encoded segment shape : {encoded_segment.shape}")
                     segment_memory += (self.compress_temporal_features([image_segment], video_idx_in_batch, all_video=True))
                 #print(f"Segment memory : {[x.shape for x in segment_memory if x is not None]}")
                 # torch.cuda.synchronize()
@@ -568,7 +558,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 raise ValueError(f"Unexpected mm_patch_merge_type: {self.config.mm_patch_merge_type}")
         else:
             image_features = self.encode_images(images)
-        print(f"Image features shape after processing: {[x.shape for x in image_features]}")
+        # print(f"Image features shape after processing: {[x.shape for x in image_features]}")
 
         # TODO: image start / end is not implemented here to support pretraining.
         if getattr(self.config, "tune_mm_mlp_adapter", False) and getattr(self.config, "mm_use_im_start_end", False):
@@ -627,7 +617,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
             # Embed the Text Tokens
             cur_input_embeds = self.get_model().embed_tokens(torch.cat(cur_input_ids_noim))
             cur_input_embeds_no_im = torch.split(cur_input_embeds, split_sizes, dim=0)
-            print(f"Cur input embeds shape : {cur_input_embeds_no_im[0].shape}")
+            # print(f"Cur input embeds shape : {cur_input_embeds_no_im[0].shape}")
             cur_new_input_embeds = []
             cur_new_labels = []
             # Insert Image Features into the Text Embeddings
@@ -642,8 +632,8 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     cur_image_idx += 1
                     cur_new_input_embeds.append(cur_image_features)
                     cur_new_labels.append(torch.full((cur_image_features.shape[0],), IGNORE_INDEX, device=cur_labels.device, dtype=cur_labels.dtype))
-            for x in cur_new_input_embeds:
-                print(f"Elements in Cur new input embeds shape : {x.shape}")
+            # for x in cur_new_input_embeds:
+            #     print(f"Elements in Cur new input embeds shape : {x.shape}")
             # Move to GPU and Concatenate
             cur_new_input_embeds = [x.to(self.device) for x in cur_new_input_embeds]
 
@@ -652,14 +642,14 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
             cur_new_labels = torch.cat(cur_new_labels)
 
             new_input_embeds.append(cur_new_input_embeds)
-            print(f"Cur new input embeds shape : {cur_new_input_embeds.shape}")
+            rank0_print(f"Cur new input embeds shape : {cur_new_input_embeds.shape}")
             new_labels.append(cur_new_labels)
 
         # Truncate sequences to max length as image embeddings can make the sequence longer
         tokenizer_model_max_length = getattr(self.config, "tokenizer_model_max_length", None)
         #rank_print("Finishing Inserting")
-        for x, modality in zip(new_input_embeds, modalities):
-             rank_print(f"New input embeds shape with {modality}: {x.shape}") # [squence_length, 3584]
+        # for x, modality in zip(new_input_embeds, modalities):
+        #      rank_print(f"New input embeds shape with {modality}: {x.shape}") # [squence_length, 3584]
         new_input_embeds = [x[:tokenizer_model_max_length] for x, modality in zip(new_input_embeds, modalities)]
         new_labels = [x[:tokenizer_model_max_length] for x, modality in zip(new_labels, modalities)]
         # TODO: Hard code for control loss spike
