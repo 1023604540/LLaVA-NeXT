@@ -104,8 +104,8 @@ class MultimodalOpsMixin:
         This method depends on configuration parameters such as:
             video_long_memory_length, video_Turing_memory_length, etc.
         """
-        video_long_memory_length = getattr(self.config, "video_long_memory_length", 2)
-        video_Turing_memory_length = getattr(self.config, "video_Turing_memory_length", 4)
+        video_long_memory_length = getattr(self.config, "video_long_memory_length", 4)
+        video_Turing_memory_length = getattr(self.config, "video_Turing_memory_length", 2)
         video_current_memory_length = getattr(self.config, "video_current_memory_length", 0)
         compress_long_memory_size = getattr(self.config, "compress_long_memory_size", 27)
         compress_Turing_memory_size = getattr(self.config, "compress_Turing_memory_size", 27)
