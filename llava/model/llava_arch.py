@@ -628,6 +628,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
             split_sizes = [x.shape[0] for x in cur_labels_noim]
             # Embed the Text Tokens
             cur_input_embeds = self.get_model().embed_tokens(torch.cat(cur_input_ids_noim))
+            # rank_print(f"Cur input embeds shape : {cur_input_embeds.shape}")
             cur_input_embeds_no_im = torch.split(cur_input_embeds, split_sizes, dim=0)
 
             # print(f"Cur input embeds shape : {cur_input_embeds_no_im[0].shape}")
