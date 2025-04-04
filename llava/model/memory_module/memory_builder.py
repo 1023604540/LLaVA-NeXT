@@ -127,61 +127,59 @@ class MultimodalOpsMixin:
         else:
             raise NotImplementedError(f'video_sample_type {video_sample_type} is not supported.')
 
-        new_image_features = []
-        for idx, img_feature in enumerate(image_features):
-            print(f"Processing image feature {idx}: {img_feature.shape}")
-            cur_start = min(video_current_memory_length, img_feature.shape[0])
-            if cur_start == 0:
-                cur_memory = img_feature[:0]
-                long_memory = img_feature
-                Turing_memory = img_feature
-            else:
-                cur_memory = img_feature[-cur_start:]
-                long_memory = img_feature[:-cur_start]
-                Turing_memory = img_feature[:-cur_start]
 
-            if compress_long_memory_size * compress_long_memory_size != long_memory.shape[1]:
-                long_memory = self.compress_spatial_features(long_memory, compress_long_memory_size)
-            if compress_Turing_memory_size * compress_Turing_memory_size != Turing_memory.shape[1]:
-                Turing_memory = self.compress_spatial_features(Turing_memory, compress_Turing_memory_size)
+        cur_start = min(video_current_memory_length, image_features.shape[0])
+        if cur_start == 0:
+            cur_memory = image_features[:0]
+            long_memory = image_features
+            Turing_memory = image_features
+        else:
+            cur_memory = image_features[-cur_start:]
+            long_memory = image_features[:-cur_start]
+            Turing_memory = image_features[:-cur_start]
 
-            if video_long_memory_length == 0 or long_memory.shape[0] == 0:
-                long_memory_compressed = long_memory[:0]
-            else:
-                long_memory_compressed, weight, step_long_indices = compress_fn(long_memory, video_long_memory_length)
+        if compress_long_memory_size * compress_long_memory_size != long_memory.shape[1]:
+            long_memory = self.compress_spatial_features(long_memory, compress_long_memory_size)
+        if compress_Turing_memory_size * compress_Turing_memory_size != Turing_memory.shape[1]:
+            Turing_memory = self.compress_spatial_features(Turing_memory, compress_Turing_memory_size)
 
-                sorted_indices = torch.argsort(weight, descending=True)
-                key_centroids = long_memory_compressed[sorted_indices]
-                key_length = 4
-                if key_centroids.shape[0] > key_length:
-                    key_centroids = key_centroids[:key_length]
-                dists = ((long_memory.unsqueeze(1) - key_centroids.unsqueeze(0)) ** 2).sum(dim=3).sum(dim=2).sqrt()
-                min_indices = torch.argmin(dists, dim=0)
-                min_indices_sorted, _ = torch.sort(min_indices)
-                print(f"Min indices sorted: {min_indices_sorted}")
-                key_memory = img_feature[min_indices_sorted]
-                cur_memory = torch.cat([key_memory, cur_memory], dim=0)
+        if video_long_memory_length == 0 or long_memory.shape[0] == 0:
+            long_memory_compressed = long_memory[:0]
+        else:
+            long_memory_compressed, weight, step_long_indices = compress_fn(long_memory, video_long_memory_length)
 
-            if video_Turing_memory_length == 0 or Turing_memory.shape[0] == 0:
-                Turing_memory_compressed = Turing_memory[:0]
-            else:
-                Turing_memory_compressed, _ = attention_feature(
-                    Turing_memory, video_Turing_memory_length, self.attention, update_ratio=compress_Turing_update_ratio
-                )
-            print(f"Memory: Long {long_memory_compressed.shape}, Turing {Turing_memory_compressed.shape}, Cur {cur_memory.shape}")
-            if long_memory_compressed.shape[0] < video_long_memory_length:
-                long_memory_compressed = long_memory[:0]
-            if Turing_memory_compressed.shape[0] < video_Turing_memory_length:
-                Turing_memory_compressed = Turing_memory[:0]
-            memory_feature = torch.cat([
-                Turing_memory_compressed.view(-1, 729, 1152),   #（9，9*9，1152）（1，729，1152）
-                long_memory_compressed.view(-1, 729, 1152),
-                cur_memory.view(-1, 729, 1152),
-            ], dim=0).to(dtype=img_feature.dtype)
+            sorted_indices = torch.argsort(weight, descending=True)
+            key_centroids = long_memory_compressed[sorted_indices]
+            key_length = 4
+            if key_centroids.shape[0] > key_length:
+                key_centroids = key_centroids[:key_length]
+            dists = ((long_memory.unsqueeze(1) - key_centroids.unsqueeze(0)) ** 2).sum(dim=3).sum(dim=2).sqrt()
+            min_indices = torch.argmin(dists, dim=0)
+            min_indices_sorted, _ = torch.sort(min_indices)
+            print(f"Min indices sorted: {min_indices_sorted}")
+            key_memory = image_features[min_indices_sorted]
+            cur_memory = torch.cat([key_memory, cur_memory], dim=0)
 
-            mem_shape = memory_feature.shape  # e.g. (frames, 729, 1152)
-            memory_feature = memory_feature.view(-1, mem_shape[-1])  # Flatten (frames*729, 1152)
-            memory_feature = self.get_model().memory_mlp(memory_feature)  # MLP with GELU activation
-            memory_feature = memory_feature.view(*mem_shape)
-            new_image_features.append(memory_feature)
-        return new_image_features
+        if video_Turing_memory_length == 0 or Turing_memory.shape[0] == 0:
+            Turing_memory_compressed = Turing_memory[:0]
+        else:
+            Turing_memory_compressed, _ = attention_feature(
+                Turing_memory, video_Turing_memory_length, self.attention, update_ratio=compress_Turing_update_ratio
+            )
+        print(f"Memory: Long {long_memory_compressed.shape}, Turing {Turing_memory_compressed.shape}, Cur {cur_memory.shape}")
+        if long_memory_compressed.shape[0] < video_long_memory_length:
+            long_memory_compressed = long_memory[:0]
+        if Turing_memory_compressed.shape[0] < video_Turing_memory_length:
+            Turing_memory_compressed = Turing_memory[:0]
+        memory_feature = torch.cat([
+            Turing_memory_compressed.view(-1, 729, 1152),   #（9，9*9，1152）（1，729，1152）
+            long_memory_compressed.view(-1, 729, 1152),
+            cur_memory.view(-1, 729, 1152),
+        ], dim=0).to(dtype=image_features.dtype)
+
+        mem_shape = memory_feature.shape  # e.g. (frames, 729, 1152)
+        memory_feature = memory_feature.view(-1, mem_shape[-1])  # Flatten (frames*729, 1152)
+        memory_feature = self.get_model().memory_mlp(memory_feature)  # MLP with GELU activation
+        memory_feature = memory_feature.view(*mem_shape)
+
+        return memory_feature
