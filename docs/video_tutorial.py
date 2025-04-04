@@ -23,8 +23,8 @@ from memory import KMeansMemory
 print("load model")
 warnings.filterwarnings("ignore")
 # Load the OneVision model
-pretrained = "lmms-lab/llava-onevision-qwen2-0.5b-ov"   # Use this for 7B model
-# pretrained = "/hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/checkpoints/llava-onevision-correct_memory_adapter/checkpoint-6000"
+# pretrained = "lmms-lab/llava-onevision-qwen2-0.5b-ov"   # Use this for 7B model
+pretrained = "/hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/checkpoints/custom_model_0.5b"
 model_name = "llava_qwen"
 device = "cuda"
 device_map = "auto"
