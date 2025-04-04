@@ -32,9 +32,9 @@ llava_model_args = {
     "multimodal": True,
 }
 tokenizer, model, image_processor, max_length = load_pretrained_model(pretrained, None, model_name, device_map=device_map, **llava_model_args)
-print(model)
-for idx, (name, param) in enumerate(model.named_parameters()):
-    print(idx, name, param.shape)
+# print(model)
+# for idx, (name, param) in enumerate(model.named_parameters()):
+#     print(idx, name, param.shape)
 
 model.eval()
 
@@ -121,10 +121,10 @@ print("load video")
 video_path = "docs/jobs.mp4"
 # video_frames = load_video(video_path, 32)
 video_frames = load_video(video_path, 32)
-print(video_frames.shape) # (16, 1024, 576, 3)
+# print(video_frames.shape) # (16, 1024, 576, 3)
 image_tensors = []
 frames = image_processor.preprocess(video_frames, return_tensors="pt")["pixel_values"].half().cuda()
-print(frames.shape) # torch.Size([16, 3, 384, 384])
+# print(frames.shape) # torch.Size([16, 3, 384, 384])
 image_tensors.append(frames)
 
 
