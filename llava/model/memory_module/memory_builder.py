@@ -164,7 +164,7 @@ class MultimodalOpsMixin:
                 min_indices = torch.argmin(dists, dim=0)
                 min_indices_sorted, _ = torch.sort(min_indices)
                 print(f"Min indices sorted: {min_indices_sorted}")
-                key_memory = img_feature[min_indices_sorted]
+                key_memory = long_memory[min_indices_sorted]
                 cur_memory = torch.cat([key_memory, cur_memory], dim=0)
 
             if video_Turing_memory_length == 0 or Turing_memory.shape[0] == 0:
