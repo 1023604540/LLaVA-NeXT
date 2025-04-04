@@ -391,7 +391,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 # print("After attention_model forward pass")
                 sep_token_id = 151647
                 sep_token_tensor = torch.tensor([sep_token_id], device=image.device).unsqueeze(0)
-                sep_embedding = self.get_model().embed_tokens(sep_token_tensor)[sep_token_id]
+                sep_embedding = self.get_model().embed_tokens(sep_token_tensor)
                 print(f"sep_embedding shape : {sep_embedding.shape}")
                 cat_segment_memory = torch.cat([image for image in segment_memory], dim=0)
                 rank0_print(f"cat_segment_memory shape : {cat_segment_memory.shape}")
