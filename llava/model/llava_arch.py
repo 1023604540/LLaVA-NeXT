@@ -392,7 +392,6 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 # sep_token_tensor = torch.tensor([sep_token_id], device=image.device)
                 # sep_embedding = self.get_model().embed_tokens(sep_token_tensor)
 
-                print(f"sep_embedding shape : {memory.shape}")
 
                 if torch.isnan(memory).any():
                     raise ValueError("NaNs detected in attention_model output!")
