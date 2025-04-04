@@ -596,6 +596,8 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
             if num_images == 0:
                 cur_image_features = image_features[cur_image_idx]
                 cur_input_embeds_1 = self.get_model().embed_tokens(cur_input_ids)
+                print(f"Cur input embeds shape : {cur_input_embeds_1.shape}")
+                print(f"cur_input_ids :{cur_input_ids}")
                 # Concatenate text embeddings (cur_input_embeds_1) with an empty image feature placeholder
                 cur_input_embeds = torch.cat([cur_input_embeds_1, cur_image_features[0:0]], dim=0)
                 new_input_embeds.append(cur_input_embeds)
