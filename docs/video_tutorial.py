@@ -23,7 +23,7 @@ from memory import KMeansMemory
 print("load model")
 warnings.filterwarnings("ignore")
 # Load the OneVision model
-pretrained = "lmms-lab/llava-onevision-qwen2-7b-ov"   # Use this for 7B model
+pretrained = "lmms-lab/llava-onevision-qwen2-0.5b-ov"   # Use this for 7B model
 # pretrained = "/hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/checkpoints/llava-onevision-correct_memory_adapter/checkpoint-6000"
 model_name = "llava_qwen"
 device = "cuda"
@@ -32,9 +32,9 @@ llava_model_args = {
     "multimodal": True,
 }
 tokenizer, model, image_processor, max_length = load_pretrained_model(pretrained, None, model_name, device_map=device_map, **llava_model_args)
-# print(model)
-# for idx, (name, param) in enumerate(model.named_parameters()):
-#     print(idx, name, param.shape)
+print(model)
+for idx, (name, param) in enumerate(model.named_parameters()):
+    print(idx, name, param.shape)
 
 model.eval()
 
