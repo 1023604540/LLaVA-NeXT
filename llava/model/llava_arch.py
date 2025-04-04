@@ -591,13 +591,12 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
         cur_image_idx = 0
         #rank_print("Inserting Images embedding")
         for batch_idx, cur_input_ids in enumerate(input_ids):
+
             num_images = (cur_input_ids == IMAGE_TOKEN_INDEX).sum()
             # rank0_print(num_images)
             if num_images == 0:
                 cur_image_features = image_features[cur_image_idx]
                 cur_input_embeds_1 = self.get_model().embed_tokens(cur_input_ids)
-                print(f"Cur input embeds shape : {cur_input_embeds_1.shape}")
-                print(f"cur_input_ids :{cur_input_ids}")
                 # Concatenate text embeddings (cur_input_embeds_1) with an empty image feature placeholder
                 cur_input_embeds = torch.cat([cur_input_embeds_1, cur_image_features[0:0]], dim=0)
                 new_input_embeds.append(cur_input_embeds)
@@ -619,6 +618,8 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
             # Embed the Text Tokens
             cur_input_embeds = self.get_model().embed_tokens(torch.cat(cur_input_ids_noim))
             cur_input_embeds_no_im = torch.split(cur_input_embeds, split_sizes, dim=0)
+            print(f"Cur input embeds shape : {cur_input_embeds.shape}")
+            print(f"cur_input_ids :{cur_input_ids}")
             # print(f"Cur input embeds shape : {cur_input_embeds_no_im[0].shape}")
             cur_new_input_embeds = []
             cur_new_labels = []
