@@ -377,30 +377,27 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     non_video_images.append(image)
                     non_video_positions.append(idx)
                     continue
-                boundaries = adjusted_segment(image.mean(dim=1).flatten(1,2))
+                # boundaries = adjusted_segment(image.mean(dim=1).flatten(1,2))
 
                 segment_memory = []
                 encoded_features = self.encode_images(image)
                 encoded_features = encoded_features.requires_grad_()
-
-                image_segments = [encoded_features[boundaries[i]:boundaries[i+1]] for i in range(len(boundaries) - 1)]
-                for image_segment in image_segments:
-                    segment_memory += (self.compress_temporal_features([image_segment], video_idx_in_batch, all_video=True))
+                memory = self.compress_temporal_features(encoded_features)
                 #print(f"Segment memory : {[x.shape for x in segment_memory if x is not None]}")
                 # torch.cuda.synchronize()
                 # print("After attention_model forward pass")
-                sep_token_id = 151647
-                sep_token_tensor = torch.tensor([sep_token_id], device=image.device)
-                sep_embedding = self.get_model().embed_tokens(sep_token_tensor)
-                print(f"sep_embedding shape : {sep_embedding.shape}")
-                cat_segment_memory = torch.cat([image for image in segment_memory], dim=0)
-                rank0_print(f"cat_segment_memory shape : {cat_segment_memory.shape}")
-                if torch.isnan(cat_segment_memory).any():
+
+                # sep_token_id = 151647
+                # sep_token_tensor = torch.tensor([sep_token_id], device=image.device)
+                # sep_embedding = self.get_model().embed_tokens(sep_token_tensor)
+                print(f"sep_embedding shape : {memory.shape}")
+
+                if torch.isnan(memory).any():
                     raise ValueError("NaNs detected in attention_model output!")
                 # rank0_print(f"cat_segment_memory shape : {cat_segment_memory.shape}")
                 # rank0_print(
                 #     f"[attention_model] output requires_grad={cat_segment_memory.requires_grad}, grad_fn={cat_segment_memory.grad_fn}")
-                images_list[idx] = cat_segment_memory
+                images_list[idx] = memory
 
             # Now process all non-video images together.
             if non_video_images:
@@ -656,7 +653,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
             cur_new_labels = torch.cat(cur_new_labels)
 
             new_input_embeds.append(cur_new_input_embeds)
-            rank0_print(f"Cur new input embeds shape : {cur_new_input_embeds.shape}")
+            # rank0_print(f"Cur new input embeds shape : {cur_new_input_embeds.shape}")
             new_labels.append(cur_new_labels)
 
         # Truncate sequences to max length as image embeddings can make the sequence longer

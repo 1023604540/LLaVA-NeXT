@@ -98,14 +98,14 @@ class MultimodalOpsMixin:
                 raise NotImplementedError(f"`compress_type` {self.config.compress_type} is not supported yet.")
         return image_features
 
-    def compress_temporal_features(self, image_features, video_idx_in_batch, all_video = False):
+    def compress_temporal_features(self, image_features):
         """
         Compress temporal features from image_features.
         This method depends on configuration parameters such as:
             video_long_memory_length, video_Turing_memory_length, etc.
         """
-        video_long_memory_length = getattr(self.config, "video_long_memory_length", 4)
-        video_Turing_memory_length = getattr(self.config, "video_Turing_memory_length", 2)
+        video_long_memory_length = getattr(self.config, "video_long_memory_length", 16)
+        video_Turing_memory_length = getattr(self.config, "video_Turing_memory_length", 16)
         video_current_memory_length = getattr(self.config, "video_current_memory_length", 0)
         compress_long_memory_size = getattr(self.config, "compress_long_memory_size", 27)
         compress_Turing_memory_size = getattr(self.config, "compress_Turing_memory_size", 27)
@@ -126,14 +126,9 @@ class MultimodalOpsMixin:
             compress_fn = compress_fn_dic[video_sample_type]
         else:
             raise NotImplementedError(f'video_sample_type {video_sample_type} is not supported.')
-        if all_video:
-            video_idx_in_batch = list(range(len(image_features)))
+
         new_image_features = []
         for idx, img_feature in enumerate(image_features):
-            # If it is not a video feature, we don't need to process it
-            if idx not in video_idx_in_batch:
-                new_image_features.append(None)
-                continue
 
             cur_start = min(video_current_memory_length, img_feature.shape[0])
             if cur_start == 0:
@@ -157,7 +152,7 @@ class MultimodalOpsMixin:
 
                 sorted_indices = torch.argsort(weight, descending=True)
                 key_centroids = long_memory_compressed[sorted_indices]
-                key_length = 3
+                key_length = 4
                 if key_centroids.shape[0] > key_length:
                     key_centroids = key_centroids[:key_length]
                 dists = ((long_memory.unsqueeze(1) - key_centroids.unsqueeze(0)) ** 2).sum(dim=3).sum(dim=2).sqrt()
