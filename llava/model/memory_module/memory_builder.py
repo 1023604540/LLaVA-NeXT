@@ -129,7 +129,7 @@ class MultimodalOpsMixin:
 
         new_image_features = []
         for idx, img_feature in enumerate(image_features):
-
+            print(f"Processing image feature {idx}: {img_feature.shape}")
             cur_start = min(video_current_memory_length, img_feature.shape[0])
             if cur_start == 0:
                 cur_memory = img_feature[:0]
