@@ -383,7 +383,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 encoded_features = self.encode_images(image)
                 # encoded_features = encoded_features.requires_grad_()
                 print(f"encoded_features shape : {encoded_features.shape}")
-                # memory = self.compress_temporal_features(encoded_features)
+                memory = self.compress_temporal_features(encoded_features)
                 #print(f"Segment memory : {[x.shape for x in segment_memory if x is not None]}")
 
                 #if torch.isnan(memory).any():
@@ -391,8 +391,8 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 # rank0_print(f"cat_segment_memory shape : {cat_segment_memory.shape}")
                 # rank0_print(
                 #     f"[attention_model] output requires_grad={cat_segment_memory.requires_grad}, grad_fn={cat_segment_memory.grad_fn}")
-                #images_list[idx] = memory
-                images_list[idx] = encoded_features
+                images_list[idx] = memory
+
 
             # Now process all non-video images together.
             if non_video_images:
