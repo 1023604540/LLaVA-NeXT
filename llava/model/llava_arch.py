@@ -381,7 +381,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
 
                 segment_memory = []
                 encoded_features = self.encode_images(image)
-                encoded_features = encoded_features.requires_grad_()
+                # encoded_features = encoded_features.requires_grad_()
                 print(f"encoded_features shape : {encoded_features.shape}")
                 memory = self.compress_temporal_features(encoded_features)
                 #print(f"Segment memory : {[x.shape for x in segment_memory if x is not None]}")
