@@ -483,7 +483,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                             # 模型将整个视频序列展平成一个单一的视觉 token
 
                             # Add hierarchical memory module
-                            #rank_print(f"Image feature shape one_token before flatten: {image_feature.shape}")  # [frame_num*196, 3584]
+                            rank_print(f"Image feature shape one_token before flatten: {image_feature.shape}")  # [frame_num*196, 3584]
                             image_feature = image_feature.flatten(0, 1)
                             # image_feature = torch.cat((image_feature, frame_memory[0]), dim=0)
                             #rank_print(f"Image feature shape one_token : {image_feature.shape}")  # [frame_num*196, 3584]
