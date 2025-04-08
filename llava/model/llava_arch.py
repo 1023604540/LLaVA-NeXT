@@ -398,8 +398,8 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 # rank0_print(f"cat_segment_memory shape : {cat_segment_memory.shape}")
                 # rank0_print(
                 #     f"[attention_model] output requires_grad={cat_segment_memory.requires_grad}, grad_fn={cat_segment_memory.grad_fn}")
-                images_list[idx] = memory
-                # images_list[idx] = encoded_features
+                #images_list[idx] = memory
+                images_list[idx] = encoded_features
 
             # Now process all non-video images together.
             if non_video_images:
