@@ -24,7 +24,7 @@ print("load model")
 warnings.filterwarnings("ignore")
 # Load the OneVision model
 # pretrained = "lmms-lab/llava-onevision-qwen2-0.5b-ov"   # Use this for 7B model
-# pretrained = "/hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/checkpoints/llava-onevision-0.5b-no_segment_llm_memory_adapter_Horeka_1fps"
+pretrained = "/hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/checkpoints/llava-onevision-0.5b-no_segment_llm_memory_adapter_Horeka_1fps"
 model_name = "llava_qwen"
 device = "cuda"
 device_map = "auto"
