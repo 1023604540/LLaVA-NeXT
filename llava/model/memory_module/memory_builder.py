@@ -126,7 +126,9 @@ class MultimodalOpsMixin:
             compress_fn = compress_fn_dic[video_sample_type]
         else:
             raise NotImplementedError(f'video_sample_type {video_sample_type} is not supported.')
-
+        cur_memory = None
+        long_memory = None
+        Turing_memory = None
 
         cur_start = min(video_current_memory_length, image_features.shape[0])
         if cur_start == 0:
