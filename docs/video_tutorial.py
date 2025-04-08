@@ -143,31 +143,31 @@ image_sizes = [frame.size for frame in video_frames]  # (width * height * 3)
 
 
 # Your custom hidden-state modification
-def modify_hidden_state(hidden_states):
-    # For instance: scale hidden states or add noise
-    print(hidden_states.shape)
-    return hidden_states * 1  # Example scaling
-
-# Choose the layer you want to hook into
-layer_to_hook = -2  # second-to-last layer as an example
+# def modify_hidden_state(hidden_states):
+#     # For instance: scale hidden states or add noise
+#     print(hidden_states.shape)
+#     return hidden_states * 1  # Example scaling
+#
+# # Choose the layer you want to hook into
+# layer_to_hook = -2  # second-to-last layer as an example
 
 # Hook function
-def hidden_state_hook(module, input, output):
-    print("Hook triggered")
-    print("Hook output types and shapes:")
-    for i, o in enumerate(output):
-        if isinstance(o, torch.Tensor):
-            print(f"output[{i}]: shape={o.shape}")
-        elif isinstance(o, (list, tuple)):
-            print(f"output[{i}]: type={type(o)}, length={len(o)}")
-        else:
-            print(f"output[{i}]: {type(o)}")
-    modified_output = modify_hidden_state(output[0])
-    hook_handle.remove()
-    return (modified_output,) + output[1:]
+# def hidden_state_hook(module, input, output):
+#     print("Hook triggered")
+#     print("Hook output types and shapes:")
+#     for i, o in enumerate(output):
+#         if isinstance(o, torch.Tensor):
+#             print(f"output[{i}]: shape={o.shape}")
+#         elif isinstance(o, (list, tuple)):
+#             print(f"output[{i}]: type={type(o)}, length={len(o)}")
+#         else:
+#             print(f"output[{i}]: {type(o)}")
+#     modified_output = modify_hidden_state(output[0])
+#     hook_handle.remove()
+#     return (modified_output,) + output[1:]
 
 # Register the hook before inference/generation
-hook_handle = model.model.layers[layer_to_hook].register_forward_hook(hidden_state_hook)
+# hook_handle = model.model.layers[layer_to_hook].register_forward_hook(hidden_state_hook)
 
 
 
