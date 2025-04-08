@@ -1,4 +1,5 @@
 datasets:
+#   This dataset need 18 hours to process
 #  - json_path: /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/llava-video/metadata/0_30_s_academic_oe_v0_1_qa_processed.json # will be released in next version of LLaVA-NeXT-Video
 #    sampling_strategy: "first:10%"
 #  - json_path: /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/llava-video/metadata/0_30_s_academic_v0_1_cap_processed.json # will be released in next version of LLaVA-NeXT-Video
