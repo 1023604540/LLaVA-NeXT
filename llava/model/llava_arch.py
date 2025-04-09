@@ -468,7 +468,6 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                                 # import pdb; pdb.set_trace()
                                 image_feature = torch.cat(concat_slow_fater_token)
 
-                                # print("!!!!!!!!!!!!")
 
                             new_image_features.append(image_feature)
                         elif mm_newline_position == "frame":
