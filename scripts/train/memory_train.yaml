@@ -1,6 +1,6 @@
 datasets:
-  - json_path: /anvme/workspace/b232dd21-zyr/llava-instruct/real_vision_flan/0_30_s_academic_oe_v0_1_qa_processed.json # will be released in next version of LLaVA-NeXT-Video
+  - json_path: /anvme/workspace/b232dd16-LLaVA-OV/metadata/0_30_s_academic_oe_v0_1_qa_processed.json # will be released in next version of LLaVA-NeXT-Video
     sampling_strategy: all
-  - json_path: /anvme/workspace/b232dd21-zyr/llava-instruct/real_vision_flan/0_30_s_academic_v0_1_cap_processed.json # will be released in next version of LLaVA-NeXT-Video
+  - json_path: /anvme/workspace/b232dd16-LLaVA-OV/metadata/0_30_s_academic_v0_1_cap_processed.json # will be released in next version of LLaVA-NeXT-Video
     sampling_strategy: all
 
