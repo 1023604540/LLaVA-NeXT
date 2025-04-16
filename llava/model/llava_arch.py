@@ -498,7 +498,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     # rank_print(f"updated_image_segment shape : {updated_image_segment.shape}")
                     rank_print(f"updated_image_segment shape : {updated_image_segment.shape}")
                 memory_augmented_features.append(updated_image_segment)
-            self.get_model().memory_readout_cache = recurrent_memory
+            # self.get_model().memory_readout_cache = recurrent_memory
 
 
 
@@ -787,18 +787,18 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
             position_ids[:, split_position:] += right_add
         # import pdb; pdb.set_trace()
         # rank_print(f"Finish preparing")
-        print(f"new_input_embeds shape: {new_input_embeds.shape}, new_labels shape: {new_labels.shape if new_labels is not None else None}, position_ids shape: {position_ids.shape if position_ids is not None else None}, attention_mask shape: {attention_mask.shape if attention_mask is not None else None}, past_key_values shape: {past_key_values[0].shape if past_key_values is not None else None}")
-        if past_key_values is None:
-            if self.get_model().memory_readout_cache is not None:
-                print("Memory readout injecting")
-                memory_readout = self.get_model().memory_readout_cache.to(dtype=self.dtype, device=self.device).flatten(0, 1)
-                print(f"memory_readout shape, {memory_readout.shape}")
-                T_mem = memory_readout.shape[0]  # memory tokens
-
-                # === 1. Inject past_key_values ===
-                past_key_values = self.inject_memory_as_kv(memory_readout, past_key_values)
-                self.get_model().memory_readout_cache = None
-        print(f"past_key_values shape: {past_key_values[0][0].shape if past_key_values is not None else None}")
+        # print(f"new_input_embeds shape: {new_input_embeds.shape}, new_labels shape: {new_labels.shape if new_labels is not None else None}, position_ids shape: {position_ids.shape if position_ids is not None else None}, attention_mask shape: {attention_mask.shape if attention_mask is not None else None}, past_key_values shape: {past_key_values[0].shape if past_key_values is not None else None}")
+        # if past_key_values is None:
+        #     if self.get_model().memory_readout_cache is not None:
+        #         print("Memory readout injecting")
+        #         memory_readout = self.get_model().memory_readout_cache.to(dtype=self.dtype, device=self.device).flatten(0, 1)
+        #         print(f"memory_readout shape, {memory_readout.shape}")
+        #         T_mem = memory_readout.shape[0]  # memory tokens
+        #
+        #         # === 1. Inject past_key_values ===
+        #         past_key_values = self.inject_memory_as_kv(memory_readout, past_key_values)
+        #         self.get_model().memory_readout_cache = None
+        # print(f"past_key_values shape: {past_key_values[0][0].shape if past_key_values is not None else None}")
         return None, position_ids, attention_mask, past_key_values, new_input_embeds, new_labels
 
     def inject_memory_as_kv(self, memory_readout, old_cache=None):
