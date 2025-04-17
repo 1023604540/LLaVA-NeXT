@@ -123,7 +123,7 @@ print("load video")
 video_path = "docs/jobs.mp4"
 # video_path = "/hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/QJ6sjg7SXOQ.mp4"
 # video_frames = load_video(video_path, 64)
-video_frames = load_video(video_path, 250)
+video_frames = load_video(video_path, 32)
 print(video_frames.shape) # (16, 1024, 576, 3)
 image_tensors = []
 frames = image_processor.preprocess(video_frames, return_tensors="pt")["pixel_values"].half().cuda()
