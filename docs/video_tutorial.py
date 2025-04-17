@@ -136,7 +136,7 @@ image_tensors.append(frames)
 conv_template = "qwen_1_5"
 
 # question = f"{DEFAULT_IMAGE_TOKEN}\n The screen is split into two sections, and in the small section on the far right, what is the man wearing a hat doing in front of a brown horse?\nA. Walking the horse\nB. Punching towards the camera\nC. Riding the horse\nD. Kneeling down\nE. Extending his palm forward while facing the camera\nAnswer with the option's letter from the given choices directly.\n"
-question = f"{DEFAULT_IMAGE_TOKEN}\nWhat is the content of the video\n"
+question = f"{DEFAULT_IMAGE_TOKEN}\nDescribe the video\n"
 conv = copy.deepcopy(conv_templates[conv_template])
 conv.append_message(conv.roles[0], question)
 conv.append_message(conv.roles[1], None)
