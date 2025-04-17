@@ -102,20 +102,20 @@ class LlavaMetaModel:
             if "unpad" in getattr(config, "mm_patch_merge_type", ""):
                 self.image_newline = nn.Parameter(torch.empty(config.hidden_size, dtype=self.dtype))
 
-        LLM_hidden_dim = getattr(config, "llm_hidden_dim", 896)
-        kv_hidden_dim = getattr(config, "kv_hidden_dim", 128)
-        self.memory_proj_layers = getattr(config, "injected_layers", 24)
-        self.memory_key_projs = nn.ModuleList([
-            nn.Linear(LLM_hidden_dim, kv_hidden_dim).to(dtype=self.dtype,
-                                                        device=self.device) for _ in range(self.memory_proj_layers)
-        ])
-        self.memory_value_projs = nn.ModuleList([
-            nn.Linear(LLM_hidden_dim, kv_hidden_dim).to(dtype=self.dtype,
-                                                        device=self.device) for _ in range(self.memory_proj_layers)
-        ])
-
-
-        self.memory_readout_cache = None
+        # LLM_hidden_dim = getattr(config, "llm_hidden_dim", 896)
+        # kv_hidden_dim = getattr(config, "kv_hidden_dim", 128)
+        # self.memory_proj_layers = getattr(config, "injected_layers", 24)
+        # self.memory_key_projs = nn.ModuleList([
+        #     nn.Linear(LLM_hidden_dim, kv_hidden_dim).to(dtype=self.dtype,
+        #                                                 device=self.device) for _ in range(self.memory_proj_layers)
+        # ])
+        # self.memory_value_projs = nn.ModuleList([
+        #     nn.Linear(LLM_hidden_dim, kv_hidden_dim).to(dtype=self.dtype,
+        #                                                 device=self.device) for _ in range(self.memory_proj_layers)
+        # ])
+        #
+        #
+        # self.memory_readout_cache = None
         self.recurrent_memory_transformer = TransformerProjector().to(self.device)
 
         def print_grad(grad):
@@ -390,46 +390,6 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
             non_video_images = []
             non_video_positions = []
 
-            # for idx, image in enumerate(images_list):
-            #     # If it is not a video feature, we don't need to process it
-            #     if idx not in video_idx_in_batch:
-            #         non_video_images.append(image)
-            #         non_video_positions.append(idx)
-            #         continue
-            #
-            #     # Init recurrent memory module
-            #     boundaries = adjusted_segment(image.mean(dim=1).flatten(1, 2))
-            #
-            #     recurrent_model = self.get_model().recurrent_memory_transformer.to(self.device)
-            #     # Clear the memory cache to avoid memory leak across videos
-            #     updated_image_segment = None
-            #     recurrent_memory = None
-            #     recurrent_model.memory_cache = []
-            #     encoded_features = self.encode_images(image)
-            #     # print(f"Encoded features shape : {encoded_features.shape}")
-            #     # encoded_features = encoded_features.requires_grad_()
-            #
-            #     image_segments = [encoded_features[boundaries[i]:boundaries[i + 1]] for i in range(len(boundaries) - 1)]
-            #     for image_segment in image_segments:
-            #         print(f"Image segment shape : {image_segment.shape}")
-            #         rank_print(torch.cuda.memory_allocated() / 1024 ** 2, "MB allocated")
-            #         rank_print(torch.cuda.memory_reserved() / 1024 ** 2, "MB reserved")
-            #         recurrent_memory, updated_image_segment = recurrent_model(image_segment)
-            #         print(f"updated_image_segment shape : {updated_image_segment.shape}")
-            #         print(f"recurrent_memory shape : {recurrent_memory.shape}")
-            #
-            #     # if torch.isnan(recurrent_memory).any():
-            #     #    raise ValueError("NaNs detected in recurrent_memory!")
-            #     # if torch.isnan(updated_image_segment).any():
-            #     #    raise ValueError("NaNs detected in updated_image_segment!")
-            #
-            #     # rank0_print(
-            #     #     f"[updated_image_segment] output requires_grad={updated_image_segment.requires_grad}, grad_fn={updated_image_segment.grad_fn}")
-            #     images_list[idx] = [recurrent_memory, updated_image_segment]
-            #
-            #
-            #     # images_list[idx] = [encoded_features, encoded_features]
-
 
             # Now process all non-video images together.
             if non_video_images:
@@ -468,43 +428,38 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     new_image_features.append(image_feat)
             image_features = new_image_features  # [frame_num, 196, 3584]
 
-            recurrent_memory = None
-            memory_augmented_features = []
-            for idx, image in enumerate(image_features):
-                # If it is not a video feature, we don't need to process it
-                if idx not in video_idx_in_batch:
-                    non_video_images.append(image)
-                    non_video_positions.append(idx)
-                    continue
-                # Init recurrent memory module
-                # rank_print(f"image shape : {image.shape}")
-                boundaries = uniform_segment(image.mean(dim=1), d=32)
-                # rank_print(f"boundaries : {boundaries}")
-                recurrent_model = self.get_model().recurrent_memory_transformer.to(self.device)
-                # Clear the memory cache to avoid memory leak across videos
-                updated_image_segment = None
-                recurrent_memory = None
-                recurrent_model.memory_cache = []
-
-                # print(f"Encoded features shape : {encoded_features.shape}")
-                # encoded_features = encoded_features.requires_grad_()
-                rank_print(f"boundaries : {boundaries}")
-                image_segments = [image[boundaries[i]:boundaries[i + 1]] for i in range(len(boundaries) - 1)]
-                for image_segment in image_segments:
-                    rank_print(f"Image segment shape : {image_segment.shape}")
-                    rank0_print(torch.cuda.memory_allocated() / 1024 ** 3, "GB allocated")
-                    rank0_print(torch.cuda.memory_reserved() / 1024 ** 3, "GB reserved")
-                    recurrent_memory, updated_image_segment = recurrent_model(image_segment)
-                    # rank_print(f"updated_image_segment shape : {updated_image_segment.shape}")
-                    rank_print(f"updated_image_segment shape : {updated_image_segment.shape}")
-                memory_augmented_features.append(updated_image_segment)
-            # self.get_model().memory_readout_cache = recurrent_memory
-
-
-
-
-
-            image_features = memory_augmented_features
+            # recurrent_memory = None
+            # memory_augmented_features = []
+            # for idx, image in enumerate(image_features):
+            #     # If it is not a video feature, we don't need to process it
+            #     if idx not in video_idx_in_batch:
+            #         non_video_images.append(image)
+            #         non_video_positions.append(idx)
+            #         continue
+            #     # Init recurrent memory module
+            #     # rank_print(f"image shape : {image.shape}")
+            #     boundaries = uniform_segment(image.mean(dim=1), d=32)
+            #     # rank_print(f"boundaries : {boundaries}")
+            #     recurrent_model = self.get_model().recurrent_memory_transformer.to(self.device)
+            #     # Clear the memory cache to avoid memory leak across videos
+            #     updated_image_segment = None
+            #     recurrent_memory = None
+            #     recurrent_model.memory_cache = []
+            #
+            #     # print(f"Encoded features shape : {encoded_features.shape}")
+            #     # encoded_features = encoded_features.requires_grad_()
+            #     rank_print(f"boundaries : {boundaries}")
+            #     image_segments = [image[boundaries[i]:boundaries[i + 1]] for i in range(len(boundaries) - 1)]
+            #     for image_segment in image_segments:
+            #         rank_print(f"Image segment shape : {image_segment.shape}")
+            #         rank0_print(torch.cuda.memory_allocated() / 1024 ** 3, "GB allocated")
+            #         rank0_print(torch.cuda.memory_reserved() / 1024 ** 3, "GB reserved")
+            #         recurrent_memory, updated_image_segment = recurrent_model(image_segment)
+            #         # rank_print(f"updated_image_segment shape : {updated_image_segment.shape}")
+            #         rank_print(f"updated_image_segment shape : {updated_image_segment.shape}")
+            #     memory_augmented_features.append(updated_image_segment)
+            # # self.get_model().memory_readout_cache = recurrent_memory
+            # image_features = memory_augmented_features
 
             mm_patch_merge_type = getattr(self.config, "mm_patch_merge_type", "flat")
             image_aspect_ratio = getattr(self.config, "image_aspect_ratio", "square")
