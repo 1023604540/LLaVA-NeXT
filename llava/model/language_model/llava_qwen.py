@@ -56,23 +56,7 @@ class LlavaQwenForCausalLM(Qwen2ForCausalLM, LlavaMetaForCausalLM):
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
         # Initialize weights and apply final processing
         self.post_init()
-        def print_grad(grad):
-            print("Gradient:", grad)
-        self.register_memory_hooks(print_grad)
 
-    def register_memory_hooks(self, hook_fn):
-        """
-        Register gradient-printing hooks for memory key/value projections.
-        This should be called only once, e.g. right after model instantiation,
-        or in __init__ itself.
-        """
-        for proj in self.model.memory_key_projs:
-            proj.weight.register_hook(hook_fn)
-            proj.bias.register_hook(hook_fn)
-
-        for proj in self.model.memory_value_projs:
-            proj.weight.register_hook(hook_fn)
-            proj.bias.register_hook(hook_fn)
     def get_model(self):
         return self.model
 

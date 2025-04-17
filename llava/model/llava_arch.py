@@ -118,18 +118,7 @@ class LlavaMetaModel:
         # self.memory_readout_cache = None
         self.recurrent_memory_transformer = TransformerProjector().to(self.device)
 
-        def print_grad(grad):
-            print("Gradient:", grad)
 
-        # Register hooks for memory_key_projs
-        for proj in self.memory_key_projs:
-            proj.weight.register_hook(print_grad)
-            proj.bias.register_hook(print_grad)
-
-        # Register hooks for memory_value_projs
-        for proj in self.memory_value_projs:
-            proj.weight.register_hook(print_grad)
-            proj.bias.register_hook(print_grad)
 
 
     def get_vision_tower(self):
