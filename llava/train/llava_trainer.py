@@ -431,33 +431,6 @@ class LLaVATrainer(Trainer):
             for i, group in enumerate(self.optimizer.param_groups):
                 rank0_print(f"[create_optimizer] Group {i} has LR = {group['lr']}")
 
-            # Configure NCCL timeout
-            if torch.distributed.is_initialized():
-                # Set NCCL timeout to 1 hour (in milliseconds)
-                torch.distributed.init_process_group(backend='nccl', timeout=datetime.timedelta(hours=1))
-                
-                # Synchronize parameters across nodes in chunks
-                chunk_size = 100 * 1024 * 1024  # 100MB chunks
-                for param in self.model.parameters():
-                    if param.requires_grad:
-                        # Calculate number of chunks needed
-                        num_elements = param.numel()
-                        num_chunks = (num_elements + chunk_size - 1) // chunk_size
-                        
-                        # Synchronize in chunks
-                        for i in range(num_chunks):
-                            start_idx = i * chunk_size
-                            end_idx = min((i + 1) * chunk_size, num_elements)
-                            chunk = param.data.view(-1)[start_idx:end_idx]
-                            try:
-                                torch.distributed.broadcast(chunk, src=0)
-                            except RuntimeError as e:
-                                if "NCCL" in str(e):
-                                    rank0_print(f"Warning: NCCL error during parameter synchronization. Retrying...")
-                                    torch.distributed.broadcast(chunk, src=0)
-                                else:
-                                    raise e
-
             # Group 0 LLM weights
             # Group 1 LLM bias
             # Group 2 []
