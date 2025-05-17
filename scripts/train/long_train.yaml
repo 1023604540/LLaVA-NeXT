@@ -18,14 +18,14 @@ datasets:
 #  - json_path: /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/llava-video/metadata/1_2_m_academic_mc_v0_1_qa_processed.json
 #    sampling_strategy: "end:80%"
   - json_path: /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/llava-video/metadata/2_3_m_academic_oe_v0_1_qa_processed.json # will be released in next version of LLaVA-NeXT-Video
-    sampling_strategy: "first:50%"
+    sampling_strategy: "end:50%"
   - json_path: /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/llava-video/metadata/2_3_m_academic_v0_1_cap_processed.json # will be released in next version of LLaVA-NeXT-Video
-    sampling_strategy: "first:50%"
+    sampling_strategy: "end:50%"
   - json_path: /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/llava-video/metadata/2_3_m_academic_mc_v0_1_qa_processed.json
-    sampling_strategy: "first:50%"
+    sampling_strategy: "end:50%"
   - json_path: /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/llava-video/metadata/2_3_m_youtube_oe_v0_1_qa_processed.json # will be released in next version of LLaVA-NeXT-Video
-    sampling_strategy: "first:50%"
+    sampling_strategy: "end:50%"
   - json_path: /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/llava-video/metadata/2_3_m_youtube_v0_1_cap_processed.json # will be released in next version of LLaVA-NeXT-Video
-    sampling_strategy: "first:50%"
+    sampling_strategy: "end:50%"
   - json_path: /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/llava-video/metadata/2_3_m_youtube_mc_v0_1_qa_processed.json
-    sampling_strategy: "first:50%"
+    sampling_strategy: "end:50%"
