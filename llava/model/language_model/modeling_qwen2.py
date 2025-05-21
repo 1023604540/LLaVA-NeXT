@@ -317,6 +317,7 @@ class Qwen2Attention(nn.Module):
             gate = torch.tanh(gate)
             # Project memory prompt to k, v
             mem_k = self.k_proj(memory_prompt)  # (bsz, mem_len, n_kv_heads, head_dim)
+            print("mem_k.shape", mem_k.shape)
             mem_v = self.v_proj(memory_prompt)
             # Repeat to match heads
             mem_k = repeat_kv(mem_k.transpose(1, 2),
