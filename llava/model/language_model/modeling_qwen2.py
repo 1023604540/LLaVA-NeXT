@@ -319,10 +319,13 @@ class Qwen2Attention(nn.Module):
             mem_k = self.k_proj(memory_prompt)  # (bsz, mem_len, n_kv_heads, head_dim)
             print("mem_k.shape", mem_k.shape)
             mem_v = self.v_proj(memory_prompt)
+            mem_len = memory_prompt.size(1)
+            # reshape to (bsz, mem_len, n_kv_heads, head_dim), then to (bsz, n_kv_heads, mem_len, head_dim)
+            mem_k = mem_k.view(bsz, mem_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
+            mem_v = mem_v.view(bsz, mem_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
             # Repeat to match heads
-            mem_k = repeat_kv(mem_k.transpose(1, 2),
-                              self.num_key_value_groups)  # -> (bsz, num_heads, mem_len, head_dim)
-            mem_v = repeat_kv(mem_v.transpose(1, 2), self.num_key_value_groups)
+            mem_k = repeat_kv(mem_k, self.num_key_value_groups)
+            mem_v = repeat_kv(mem_v, self.num_key_value_groups)
             # Compute adapter scores and output
             adapter_scores = torch.matmul(query_states, mem_k.transpose(-2, -1)) / math.sqrt(self.head_dim)
             adapter_scores = gate * F.softmax(adapter_scores, dim=-1)
