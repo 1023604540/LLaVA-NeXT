@@ -236,7 +236,8 @@ class Qwen2Attention(nn.Module):
             max_position_embeddings=self.max_position_embeddings,
             base=self.rope_theta,
         )
-
+        # Gating parameter for memory prompts, initialized to zero
+        self.memory_gate = nn.Parameter(torch.zeros(1, self.num_heads, 1, 1))
     def forward(
         self,
         hidden_states: torch.Tensor,
@@ -245,6 +246,8 @@ class Qwen2Attention(nn.Module):
         past_key_value: Optional[Cache] = None,
         output_attentions: bool = False,
         use_cache: bool = False,
+        memory_prompt: Optional[torch.FloatTensor] = None,
+        memory_gate: Optional[torch.Tensor] = None,
         **kwargs,
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
         if "padding_mask" in kwargs:
@@ -307,6 +310,25 @@ class Qwen2Attention(nn.Module):
                 f" {attn_output.size()}"
             )
 
+        # Gated memory prompt attention (adapter)
+        if memory_prompt is not None:
+            # Expand gate
+            gate = memory_gate if memory_gate is not None else self.memory_gate  # (1, num_heads, 1, 1)
+            gate = torch.tanh(gate)
+            # Project memory prompt to k, v
+            mem_k = self.k_proj(memory_prompt)  # (bsz, mem_len, n_kv_heads, head_dim)
+            mem_v = self.v_proj(memory_prompt)
+            # Repeat to match heads
+            mem_k = repeat_kv(mem_k.transpose(1, 2),
+                              self.num_key_value_groups)  # -> (bsz, num_heads, mem_len, head_dim)
+            mem_v = repeat_kv(mem_v.transpose(1, 2), self.num_key_value_groups)
+            # Compute adapter scores and output
+            adapter_scores = torch.matmul(query_states, mem_k.transpose(-2, -1)) / math.sqrt(self.head_dim)
+            adapter_scores = gate * F.softmax(adapter_scores, dim=-1)
+            adapter_output = torch.matmul(adapter_scores, mem_v)  # (bsz, num_heads, seq_len, head_dim)
+            # Add to attention output
+            attn_output = attn_output + adapter_output
+
         attn_output = attn_output.transpose(1, 2).contiguous()
         attn_output = attn_output.reshape(bsz, q_len, self.hidden_size)
 
@@ -344,8 +366,21 @@ class Qwen2FlashAttention2(Qwen2Attention):
         past_key_value: Optional[Cache] = None,
         output_attentions: bool = False,
         use_cache: bool = False,
+        memory_prompt: Optional[torch.FloatTensor] = None,
         **kwargs,
     ):
+        # If memory injection is needed, fallback to manual attention with gating
+        if memory_prompt is not None:
+            return super().forward(
+                hidden_states=hidden_states,
+                attention_mask=attention_mask,
+                position_ids=position_ids,
+                past_key_value=past_key_value,
+                output_attentions=output_attentions,
+                use_cache=use_cache,
+                memory_prompt=memory_prompt,
+                memory_gate=self.memory_gate,
+            )
         # print("Qwen2FlashAttention2.forward")
         if "padding_mask" in kwargs:
             warnings.warn(
@@ -772,13 +807,6 @@ class Qwen2DecoderLayer(nn.Module):
         if memory_prompt is not None:
             if memory_prompt.dim() == 3:
                 memory_prompt = memory_prompt.expand(hidden_states.size(0), -1, -1)
-            hidden_states = torch.cat([memory_prompt, hidden_states], dim=1)
-            # print(f"[Layer {self.layer_idx}] Hidden after memory prompt concat: {hidden_states.shape}")
-            if attention_mask is not None:
-                mem_len = memory_prompt.size(1)
-                pad_mask = torch.zeros(attention_mask.shape[0], 1, 1, mem_len, device=attention_mask.device)
-                attention_mask = torch.cat([pad_mask, attention_mask], dim=-1)
-
         # Self Attention
         attention_output, self_attn_weights, present_key_value = self.self_attn(
             hidden_states=hidden_states,
@@ -787,11 +815,9 @@ class Qwen2DecoderLayer(nn.Module):
             past_key_value=past_key_value,
             output_attentions=output_attentions,
             use_cache=use_cache,
+            memory_prompt=memory_prompt,
+            memory_gate=getattr(self.self_attn, 'memory_gate', None),
         )
-
-        # Trim the attention output to remove the memory prompt
-        if memory_prompt is not None:
-            attention_output = attention_output[:, memory_prompt.size(1):, :]
 
         hidden_states = residual + attention_output
         # print("hidden_states", hidden_states.shape)
