@@ -34,7 +34,7 @@ PREV_STAGE_CHECKPOINT="/anvme/workspace/b232dd16-LLaVA-OV/llava-onevision-qwen2-
 echo "PREV_STAGE_CHECKPOINT: ${PREV_STAGE_CHECKPOINT}"
 echo "MID_RUN_NAME: ${RUN_NAME}"
 
-NUM_GPUS=2
+NUM_GPUS=4
 NNODES=$SLURM_NNODES
 RANK=$SLURM_PROCID
 ADDR=$(scontrol show hostname $SLURM_NODELIST | head -n1)  # Master node
