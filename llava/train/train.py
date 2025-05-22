@@ -1699,6 +1699,9 @@ def train(attn_implementation=None):
                 rank0_print("Unfreezing larimar_weights")
                 for p in model.get_model().memory_projections.parameters():
                     p.requires_grad = True
+                for name, param in model.named_parameters():
+                    if "memory_gate" in name:
+                        param.requires_grad_(True)
             if "mm_vision_resampler" in tunable_parts:
                 for p in model.get_model().vision_resampler.parameters():
                     p.requires_grad = True
