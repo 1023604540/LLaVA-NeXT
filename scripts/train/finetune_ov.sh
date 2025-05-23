@@ -90,7 +90,7 @@ ACCELERATE_CPU_AFFINITY=0 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --torch_compile_backend "inductor" \
     --dataloader_drop_last False \
     --force_sample True \
-    --frames_upbound 250   # 32 initially
+    --frames_upbound 300   # 32 initially
 exit 0;
 
 # You can delete the sdpa attn_implementation if you want to use flash attn

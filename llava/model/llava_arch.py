@@ -412,7 +412,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
             concat_images = torch.cat([image for image in images_list], dim=0)
             split_sizes = [image.shape[0] for image in images_list]
 
-            chunk_wise_encode = False
+            chunk_wise_encode = True
             if chunk_wise_encode:
                 # Encode the images in chunks to save memory
                 # Set the chunk size
