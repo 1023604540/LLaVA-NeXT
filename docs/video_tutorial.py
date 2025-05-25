@@ -19,7 +19,18 @@ import math
 from memory import FIFOMemory
 from memory import KMeansMemory
 
+import resource
+import os
 
+# Set core file size to unlimited (again, just in case)
+resource.setrlimit(resource.RLIMIT_CORE, (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
+
+# Optional: change to working dir so core drops there
+os.chdir(os.getenv("COREDUMP_DIR", "."))
+
+# Enable faulthandler in case Python dies first
+import faulthandler
+faulthandler.enable()
 
 print("load model")
 warnings.filterwarnings("ignore")
