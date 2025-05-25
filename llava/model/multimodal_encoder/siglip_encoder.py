@@ -550,7 +550,6 @@ class SigLipVisionTower(nn.Module):
 
         if not delay_load:
             rank0_print(f"Loading vision tower: {vision_tower}")
-            print("this is where i am")
             self.load_model()
         elif getattr(vision_tower_cfg, "unfreeze_mm_vision_tower", False):
             # TODO: better detector is needed.
