@@ -19,7 +19,8 @@ import math
 from memory import FIFOMemory
 from memory import KMeansMemory
 
-
+import torch
+print(torch.utils.cpp_extension._get_build_directory('kernels', create=False))
 
 print("load model")
 warnings.filterwarnings("ignore")
