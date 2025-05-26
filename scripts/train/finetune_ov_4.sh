@@ -1,17 +1,19 @@
 export OMP_NUM_THREADS=8
 export NCCL_IB_DISABLE=0
-export NCCL_IB_GID_INDEX=0
-export NCCL_SOCKET_IFNAME=ib0
-export NCCL_DEBUG=INFO   # Uncomment for debugging
+
+export NCCL_DEBUG=DEBUG
+export USE_PYTORCH_KERNEL_CACHE=0
+
+# export NCCL_DEBUG=INFO   # Uncomment for debugging
 export NCCL_DEBUG_SUBSYS=ALL
-export TORCH_DISTRIBUTED_DEBUG=DETAIL
 export NCCL_TIMEOUT=3600  # 1 hour
-export TORCH_NCCL_TRACE_BUFFER_SIZE=33554432  # Uncomment for debugging
+# export TORCH_NCCL_TRACE_BUFFER_SIZE=33554432  # Uncomment for debugging
 
 # The next line is very important! Solves the WatchDog TimeOut Issue
 export NCCL_P2P_DISABLE=1
 
 export WANDB_API_KEY="638aa591e9881cd840eb171df3f625bcd7613d14"
+
 
 LLM_VERSION="Qwen/Qwen2-0.5B-Instruct"
 LLM_VERSION_CLEAN="${LLM_VERSION//\//_}"
