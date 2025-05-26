@@ -237,7 +237,10 @@ class Qwen2Attention(nn.Module):
             base=self.rope_theta,
         )
         # Gating parameter for memory prompts, initialized to zero
-        self.memory_gate = nn.Parameter(torch.zeros(1, self.num_heads, 1, 1))
+        # self.memory_gate = nn.Parameter(torch.zeros(1, self.num_heads, 1, 1))
+        self.memory_gate = nn.Parameter(torch.empty(1, self.num_heads, 1, 1))
+
+
     def forward(
         self,
         hidden_states: torch.Tensor,
