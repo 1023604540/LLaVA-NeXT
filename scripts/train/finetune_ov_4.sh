@@ -1,7 +1,7 @@
 export OMP_NUM_THREADS=8
 export NCCL_IB_DISABLE=0
 export NCCL_IB_GID_INDEX=0
-export NCCL_SOCKET_IFNAME=ib0
+export NCCL_SOCKET_IFNAME=ibs2
 # export NCCL_DEBUG=INFO   # Uncomment for debugging
 export NCCL_DEBUG_SUBSYS=ALL
 export NCCL_TIMEOUT=3600  # 1 hour
