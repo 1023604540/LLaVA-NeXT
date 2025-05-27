@@ -11,7 +11,7 @@ export NCCL_TIMEOUT=3600  # 1 hour
 
 # The next line is very important! Solves the WatchDog TimeOut Issue
 export NCCL_P2P_DISABLE=1
-
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export WANDB_API_KEY="638aa591e9881cd840eb171df3f625bcd7613d14"
 
 LLM_VERSION="Qwen/Qwen2-0.5B-Instruct"
@@ -88,7 +88,7 @@ srun --mpi=pmix --export=ALL,ACCELERATE_CPU_AFFINITY=0 \
     --logging_steps 1 \
     --tf32 True \
     --model_max_length 32768 \
-    --gradient_checkpointing False \
+    --gradient_checkpointing True \
     --dataloader_num_workers 2 \
     --lazy_preprocess True \
     --report_to wandb \
