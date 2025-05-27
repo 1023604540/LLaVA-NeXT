@@ -47,7 +47,7 @@ export MASTER_PORT=$(shuf -i 49152-65535 -n 1)  # IANA动态端口范围
 echo "[RANK $RANK] MASTER_ADDR=$MASTER_ADDR, MASTER_PORT=$MASTER_PORT"
 
 srun --mpi=pmix --export=ALL,ACCELERATE_CPU_AFFINITY=0 \
-  torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NNODES}" --node_rank="${RANK}" \
+  torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NNODES}" --node_rank="${RANK}" --rdzv_backend=c10d \
     --rdzv_endpoint=${MASTER_ADDR}:${MASTER_PORT} \
     llava/train/train_mem.py \
     --deepspeed scripts/zero2.json \
