@@ -261,7 +261,7 @@ class Qwen2Attention(nn.Module):
 
         query_states = self.q_proj(hidden_states)
         key_states = self.k_proj(hidden_states)
-        print("key_states.shape original", key_states.shape)
+        # print("key_states.shape original", key_states.shape)
         value_states = self.v_proj(hidden_states)
 
         query_states = query_states.view(bsz, q_len, self.num_heads, self.head_dim).transpose(1, 2)
@@ -321,7 +321,7 @@ class Qwen2Attention(nn.Module):
             gate = torch.tanh(gate)
             # Project memory prompt to k, v
             mem_k = self.k_proj(memory_prompt)  # (bsz, mem_len, n_kv_heads, head_dim)
-            print("mem_k.shape", mem_k.shape)
+            # print("mem_k.shape", mem_k.shape)
             mem_v = self.v_proj(memory_prompt)
             mem_len = memory_prompt.size(1)
             # reshape to (bsz, mem_len, n_kv_heads, head_dim), then to (bsz, n_kv_heads, mem_len, head_dim)
