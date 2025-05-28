@@ -494,13 +494,24 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 #         updated_image_segment = torch.zeros(updated_image_segment.shape).to(device=self.device,dtype=self.dtype)
                 #         rank_print(f"updated_image_segment dropout")
 
-            original_frames_idx = torch.linspace(0, image.shape[0] - 1,
-                                                        steps=32)  # Sample 8 frames as initial memory
-            original_frames = image[original_frames_idx.long()]
-            memory_augmented_features.append(original_frames)
+                num_frames = image.shape[0]
+                num_samples = min(32, num_frames)  # can't sample more than you have!
 
-            if recurrent_memory is not None:
-                self.get_model().memory_readout_cache = recurrent_memory
+                # Get linearly spaced float indices, then round to nearest int
+                original_frames_idx = torch.linspace(0, num_frames - 1, steps=num_samples)
+                original_frames_idx = torch.round(original_frames_idx).long()
+
+                # Clamp just to be 100% safe
+                original_frames_idx = torch.clamp(original_frames_idx, 0, num_frames - 1)
+
+                # Now index safely
+                original_frames = image[original_frames_idx]
+
+                memory_augmented_features.append(original_frames)
+
+                if recurrent_memory is not None:
+                    self.get_model().memory_readout_cache = recurrent_memory
+
             projected_prompts = []
             # Project through each layer's linear projection
             for i in range(self.get_model().memory_proj_layers):
