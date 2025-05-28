@@ -336,6 +336,7 @@ class Qwen2Attention(nn.Module):
             adapter_output = torch.matmul(adapter_scores, mem_v)  # (bsz, num_heads, seq_len, head_dim)
             # Add to attention output
             attn_output = attn_output + adapter_output
+            print("attn_output being changed!!!!!!!!!!!")
 
         attn_output = attn_output.transpose(1, 2).contiguous()
         attn_output = attn_output.reshape(bsz, q_len, self.hidden_size)
@@ -1112,27 +1113,15 @@ class Qwen2Model(Qwen2PreTrainedModel):
 
                 # print(f"layer_position_ids", layer_position_ids)
             if self.gradient_checkpointing and self.training:
-                def custom_forward(*inputs):
-                    return decoder_layer(
-                        inputs[0],  # hidden_states
-                        attention_mask=inputs[1],
-                        position_ids=inputs[2],
-                        past_key_value=inputs[3],
-                        output_attentions=inputs[4],
-                        use_cache=inputs[5],
-                        memory_prompt=inputs[6],
-                    )
-
                 layer_outputs = self._gradient_checkpointing_func(
-                    custom_forward,
+                    decoder_layer.__call__,
                     hidden_states,
                     attention_mask,
-                    layer_position_ids,
+                    position_ids,
                     past_key_values,
                     output_attentions,
                     use_cache,
-                    current_mem,  # ✅ now memory_prompt is passed in
-                    use_reentrant=False,
+                    current_mem,
                 )
             else:
                 layer_outputs = decoder_layer(
