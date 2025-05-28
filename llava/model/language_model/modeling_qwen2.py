@@ -1122,6 +1122,7 @@ class Qwen2Model(Qwen2PreTrainedModel):
                     output_attentions,
                     use_cache,
                     current_mem,
+                    use_reentrant=False
                 )
             else:
                 layer_outputs = decoder_layer(
