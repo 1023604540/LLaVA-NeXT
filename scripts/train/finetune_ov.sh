@@ -9,7 +9,7 @@ export NCCL_TIMEOUT=3600  # 1 hour
 export TORCH_NCCL_TRACE_BUFFER_SIZE=33554432
 export NCCL_P2P_DISABLE=1
 export WANDB_API_KEY="638aa591e9881cd840eb171df3f625bcd7613d14"
-
+export CUTLASS_PATH=/hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/cutlass
 
 
 LLM_VERSION="Qwen/Qwen2-7B-Instruct"
