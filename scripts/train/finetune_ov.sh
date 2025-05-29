@@ -9,7 +9,7 @@ export NCCL_TIMEOUT=3600  # 1 hour
 export TORCH_NCCL_TRACE_BUFFER_SIZE=33554432
 export NCCL_P2P_DISABLE=1
 export WANDB_API_KEY="638aa591e9881cd840eb171df3f625bcd7613d14"
-
+export CUDA_LAUNCH_BLOCKING=1
 
 
 LLM_VERSION="Qwen/Qwen2-7B-Instruct"
@@ -82,7 +82,7 @@ ACCELERATE_CPU_AFFINITY=0 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --logging_steps 1 \
     --tf32 True \
     --model_max_length 32768 \
-    --gradient_checkpointing False \
+    --gradient_checkpointing True \
     --dataloader_num_workers 2 \
     --lazy_preprocess True \
     --report_to wandb \
