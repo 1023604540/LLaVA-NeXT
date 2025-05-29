@@ -486,7 +486,6 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
 
                 # Clamp just to be 100% safe
                 initial_frames_idx = torch.clamp(initial_frames_idx, 0, num_frames - 1)
-                print(f"initial_frames_idx : {initial_frames_idx}")
                 image_initial_memory = image[initial_frames_idx]
                 recurrent_model.memory_cache.append(image_initial_memory)
                 for image_segment in image_segments:
