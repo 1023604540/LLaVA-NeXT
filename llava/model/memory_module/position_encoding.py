@@ -47,6 +47,8 @@ class TemporalPositionalEncoding(nn.Module):
         if x.dim() == 3:
             # x: (T, N, C)
             T, N, C = x.shape
+            if T > self.max_frames:
+                raise ValueError(f"T={T} exceeds max_frames={self.max_frames} in TemporalPositionalEncoding.")
             t_idxs = torch.arange(T, device=x.device)
             # Retrieve positional encodings
             if self.learnable:
