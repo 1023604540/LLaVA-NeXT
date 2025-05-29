@@ -476,7 +476,18 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 # rank_print(f"boundaries : {boundaries}")
                 image_segments = [image[boundaries[i]:boundaries[i + 1]] for i in range(len(boundaries) - 1)]
                 image_initial_memory_index = torch.linspace(0, image.shape[0]-1, steps=8)  # Sample 8 frames as initial memory
-                image_initial_memory = image[image_initial_memory_index.long()]
+
+                num_frames = image.shape[0]
+                initial_samples = min(8, num_frames)  # can't sample more than you have!
+
+                # Get linearly spaced float indices, then round to nearest int
+                initial_frames_idx = torch.linspace(0, num_frames - 1, steps=initial_samples)
+                initial_frames_idx = torch.round(initial_frames_idx).long()
+
+                # Clamp just to be 100% safe
+                initial_frames_idx = torch.clamp(initial_frames_idx, 0, num_frames - 1)
+                print(f"initial_frames_idx : {initial_frames_idx}")
+                image_initial_memory = image[initial_frames_idx]
                 recurrent_model.memory_cache.append(image_initial_memory)
                 for image_segment in image_segments:
                     # rank_print(f"Image segment shape : {image_segment.shape}")
@@ -494,7 +505,6 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 #         updated_image_segment = torch.zeros(updated_image_segment.shape).to(device=self.device,dtype=self.dtype)
                 #         rank_print(f"updated_image_segment dropout")
 
-                num_frames = image.shape[0]
                 num_samples = min(32, num_frames)  # can't sample more than you have!
 
                 # Get linearly spaced float indices, then round to nearest int
