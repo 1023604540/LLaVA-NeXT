@@ -130,7 +130,7 @@ class LlavaMetaModel:
         self.memory_readout_cache = None
         # Initialize positional encoding
         self.positional_encoding = TemporalPositionalEncoding(
-            max_frames=250,
+            max_frames=300,
             embed_dim=LLM_hidden_dim,
             learnable=False
         ).to(self.device)
