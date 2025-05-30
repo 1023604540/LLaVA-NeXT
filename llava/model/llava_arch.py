@@ -459,7 +459,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     non_video_positions.append(idx)
                     continue
                 # Add positional encoding
-                image = self.get_model().positional_encoding(image)
+                # image = self.get_model().positional_encoding(image)
 
                 # Init recurrent memory module
                 rank_print(f"image shape : {image.shape}")
