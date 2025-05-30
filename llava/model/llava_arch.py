@@ -522,7 +522,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     self.get_model().memory_readout_cache = recurrent_memory
 
             projected_prompts = []
-            self.get_model().memory_readout_cache = torch.zeros(recurrent_memory.shape, dtype=self.dtype, device=self.device)
+
             # Project through each layer's linear projection
             for i in range(self.get_model().memory_proj_layers):
                 # (4, 196, 896) → (1, 784, 896)
@@ -871,7 +871,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
             print(f"PCA 投影图已保存为 {filename}")
         # save_memory_pca(recurrent_model.memory_cache)
         ############### This is for PCA visualization ################
-
+        memory_prompt_stack = None
 
         return memory_prompt_stack, None, position_ids, attention_mask, past_key_values, new_input_embeds, new_labels
 
