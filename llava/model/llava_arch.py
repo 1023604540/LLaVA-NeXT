@@ -522,6 +522,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                     self.get_model().memory_readout_cache = recurrent_memory
 
             projected_prompts = []
+            self.get_model().memory_readout_cache = torch.zeros(recurrent_memory.shape, dtype=self.dtype, device=self.device)
             # Project through each layer's linear projection
             for i in range(self.get_model().memory_proj_layers):
                 # (4, 196, 896) → (1, 784, 896)
