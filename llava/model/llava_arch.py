@@ -480,7 +480,6 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 # encoded_features = encoded_features.requires_grad_()
                 # rank_print(f"boundaries : {boundaries}")
                 image_segments = [image[boundaries[i]:boundaries[i + 1]] for i in range(len(boundaries) - 1)]
-                image_initial_memory_index = torch.linspace(0, image.shape[0]-1, steps=8)  # Sample 8 frames as initial memory
 
                 num_frames = image.shape[0]
                 initial_samples = min(8, num_frames)  # can't sample more than you have!
@@ -876,7 +875,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
             print(f"PCA 投影图已保存为 {filename}")
         # save_memory_pca(recurrent_model.memory_cache)
         ############### This is for PCA visualization ################
-        memory_prompt_stack = None
+
 
         return memory_prompt_stack, None, position_ids, attention_mask, past_key_values, new_input_embeds, new_labels
 
