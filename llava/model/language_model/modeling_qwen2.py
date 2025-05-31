@@ -319,6 +319,7 @@ class Qwen2Attention(nn.Module):
             # Expand gate
             gate = memory_gate if memory_gate is not None else self.memory_gate  # (1, num_heads, 1, 1)
             gate = torch.tanh(gate)
+            print(f"memory_gate.shape: {gate.shape}, gate = {gate}")
             # Project memory prompt to k, v
             mem_k = self.k_proj(memory_prompt)  # (bsz, mem_len, n_kv_heads, head_dim)
             # print("mem_k.shape", mem_k.shape)
