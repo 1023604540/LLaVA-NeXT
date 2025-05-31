@@ -505,7 +505,10 @@ class Qwen2FlashAttention2(Qwen2Attention):
         query_states = query_states.transpose(1, 2)
         key_states = key_states.transpose(1, 2)
         value_states = value_states.transpose(1, 2)
-
+        if attention_mask is not None:
+            print("flash attention attention_mask.shape", attention_mask.shape)
+        else:
+            print("flash attention attention_mask is None")
         attn_output = self._flash_attention_forward(
             query_states,
             key_states,
