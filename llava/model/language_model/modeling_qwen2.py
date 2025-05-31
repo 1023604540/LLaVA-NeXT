@@ -332,6 +332,8 @@ class Qwen2Attention(nn.Module):
             mem_v = repeat_kv(mem_v, self.num_key_value_groups)
             # Compute adapter scores and output
             adapter_scores = torch.matmul(query_states, mem_k.transpose(-2, -1)) / math.sqrt(self.head_dim)
+            if attention_mask is None:
+                print("WARNING: attention_mask is None, adapter_scores will not be masked.")
             if attention_mask is not None:
                 print("attention_mask.shape", attention_mask.shape)
                 print("adapter_scores.shape", adapter_scores.shape)
