@@ -341,6 +341,8 @@ class Qwen2Attention(nn.Module):
             adapter_scores = gate * F.softmax(adapter_scores, dim=-1)
             adapter_output = torch.matmul(adapter_scores, mem_v)  # (bsz, num_heads, seq_len, head_dim)
             # Add to attention output
+            print(adapter_output.shape, attn_output.shape)
+            print(adapter_output)
             attn_output = attn_output + adapter_output
 
 
