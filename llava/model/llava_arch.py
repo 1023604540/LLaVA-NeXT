@@ -364,6 +364,11 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
     def prepare_inputs_labels_for_multimodal(self, input_ids, position_ids, attention_mask, past_key_values, labels, images, modalities=["image"], image_sizes=None):
         # start = time.time()
         vision_tower = self.get_vision_tower()
+        if labels is not None:
+            print(f"labels shape : {labels.shape}")
+            print(labels)
+            print(f"input_ids shape : {input_ids.shape}")
+            print(input_ids)
         # rank_print(modalities)
         if vision_tower is None or images is None or input_ids.shape[1] == 1:
             # print("vision_tower is None or images is None or input_ids.shape[1] == 1")
