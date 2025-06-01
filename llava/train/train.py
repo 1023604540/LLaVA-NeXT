@@ -1782,7 +1782,7 @@ def train(attn_implementation=None):
     trainer.create_optimizer()
     # torch.autograd.set_detect_anomaly(True)
     set_global_optimizer(trainer.optimizer)
-    print_grad_norm = True
+    print_grad_norm = False
     if print_grad_norm:
         for name, param in model.named_parameters():
             if not param.requires_grad:
