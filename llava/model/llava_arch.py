@@ -462,47 +462,51 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 # Add positional encoding
                 # image = self.get_model().positional_encoding(image)
 
-                # Init recurrent memory module
-                rank_print(f"image shape : {image.shape}")
-                boundaries = uniform_segment(image, d=32)
-                rank_print(f"boundaries : {boundaries}")
-                recurrent_model = self.get_model().recurrent_memory_transformer.to(self.device)
-                # Clear the memory cache to avoid memory leak across videos
-                updated_image_segment = None
-                recurrent_memory = None
-                recurrent_model.memory_cache = []
 
-                # print(f"Encoded features shape : {encoded_features.shape}")
-                # encoded_features = encoded_features.requires_grad_()
+
+                # # Init recurrent memory module
+                # rank_print(f"image shape : {image.shape}")
+                # boundaries = uniform_segment(image, d=32)
                 # rank_print(f"boundaries : {boundaries}")
-                image_segments = [image[boundaries[i]:boundaries[i + 1]] for i in range(len(boundaries) - 1)]
-
+                # recurrent_model = self.get_model().recurrent_memory_transformer.to(self.device)
+                # # Clear the memory cache to avoid memory leak across videos
+                # updated_image_segment = None
+                # recurrent_memory = None
+                # recurrent_model.memory_cache = []
+                #
+                # # print(f"Encoded features shape : {encoded_features.shape}")
+                # # encoded_features = encoded_features.requires_grad_()
+                # # rank_print(f"boundaries : {boundaries}")
+                # image_segments = [image[boundaries[i]:boundaries[i + 1]] for i in range(len(boundaries) - 1)]
+                #
                 num_frames = image.shape[0]
-                initial_samples = min(8, num_frames)  # can't sample more than you have!
+                # initial_samples = min(8, num_frames)  # can't sample more than you have!
+                #
+                # # Get linearly spaced float indices, then round to nearest int
+                # initial_frames_idx = torch.linspace(0, num_frames - 1, steps=initial_samples)
+                # initial_frames_idx = torch.round(initial_frames_idx).long()
+                #
+                # # Clamp just to be 100% safe
+                # initial_frames_idx = torch.clamp(initial_frames_idx, 0, num_frames - 1)
+                # image_initial_memory = image[initial_frames_idx]
+                # recurrent_model.memory_cache.append(image_initial_memory)
+                # for image_segment in image_segments:
+                #     # rank_print(f"Image segment shape : {image_segment.shape}")
+                #     # rank0_print(torch.cuda.memory_allocated() / 1024 ** 3, "GB allocated")
+                #     # rank0_print(torch.cuda.memory_reserved() / 1024 ** 3, "GB reserved")
+                #     recurrent_memory, updated_image_segment = recurrent_model(image_segment)
+                #     # rank_print(f"updated_image_segment shape : {updated_image_segment.shape}")
+                #     # rank_print(f"recurrent_memory shape : {recurrent_memory.shape}")
+                # # Branch dropout the updated image segment
+                # # dropout_rate = getattr(self.config, "recurrent_dropout_rate", 0.2)
+                # # if self.training:
+                # #     number = torch.rand(1, device=updated_image_segment.device).item()
+                # #     # print(f"random number is {number}")
+                # #     if number < dropout_rate:
+                # #         updated_image_segment = torch.zeros(updated_image_segment.shape).to(device=self.device,dtype=self.dtype)
+                # #         rank_print(f"updated_image_segment dropout")
 
-                # Get linearly spaced float indices, then round to nearest int
-                initial_frames_idx = torch.linspace(0, num_frames - 1, steps=initial_samples)
-                initial_frames_idx = torch.round(initial_frames_idx).long()
 
-                # Clamp just to be 100% safe
-                initial_frames_idx = torch.clamp(initial_frames_idx, 0, num_frames - 1)
-                image_initial_memory = image[initial_frames_idx]
-                recurrent_model.memory_cache.append(image_initial_memory)
-                for image_segment in image_segments:
-                    # rank_print(f"Image segment shape : {image_segment.shape}")
-                    # rank0_print(torch.cuda.memory_allocated() / 1024 ** 3, "GB allocated")
-                    # rank0_print(torch.cuda.memory_reserved() / 1024 ** 3, "GB reserved")
-                    recurrent_memory, updated_image_segment = recurrent_model(image_segment)
-                    # rank_print(f"updated_image_segment shape : {updated_image_segment.shape}")
-                    # rank_print(f"recurrent_memory shape : {recurrent_memory.shape}")
-                # Branch dropout the updated image segment
-                # dropout_rate = getattr(self.config, "recurrent_dropout_rate", 0.2)
-                # if self.training:
-                #     number = torch.rand(1, device=updated_image_segment.device).item()
-                #     # print(f"random number is {number}")
-                #     if number < dropout_rate:
-                #         updated_image_segment = torch.zeros(updated_image_segment.shape).to(device=self.device,dtype=self.dtype)
-                #         rank_print(f"updated_image_segment dropout")
 
                 num_samples = min(32, num_frames)  # can't sample more than you have!
 
@@ -872,7 +876,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
         # save_memory_pca(recurrent_model.memory_cache)
         ############### This is for PCA visualization ################
 
-
+        memory_prompt_stack = None
         return memory_prompt_stack, None, position_ids, attention_mask, past_key_values, new_input_embeds, new_labels
 
     def inject_memory_as_kv(self, memory_readout, old_cache=None):
