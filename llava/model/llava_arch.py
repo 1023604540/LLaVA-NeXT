@@ -520,8 +520,8 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 # Now index safely
                 original_frames = image[original_frames_idx]
 
-                memory_augmented_features.append(original_frames.detach())
-
+                # memory_augmented_features.append(original_frames.detach())
+                memory_augmented_features.append(original_frames)
                 if recurrent_memory is not None:
                     self.get_model().memory_readout_cache = recurrent_memory
 
