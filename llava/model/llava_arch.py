@@ -525,16 +525,16 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 if recurrent_memory is not None:
                     self.get_model().memory_readout_cache = recurrent_memory
 
-            projected_prompts = []
-
-            # Project through each layer's linear projection
-            for i in range(self.get_model().memory_proj_layers):
-                # (4, 196, 896) → (1, 784, 896)
-                projected = self.get_model().memory_projections[i](self.get_model().memory_readout_cache).view(1, -1,self.config.hidden_size)
-                projected_prompts.append(projected)
-
-            # Stack into shape: (10, 784, 896)
-            memory_prompt_stack = torch.cat(projected_prompts, dim=0)  # shape: (10, 784, 896)
+            # projected_prompts = []
+            #
+            # # Project through each layer's linear projection
+            # for i in range(self.get_model().memory_proj_layers):
+            #     # (4, 196, 896) → (1, 784, 896)
+            #     projected = self.get_model().memory_projections[i](self.get_model().memory_readout_cache).view(1, -1,self.config.hidden_size)
+            #     projected_prompts.append(projected)
+            #
+            # # Stack into shape: (10, 784, 896)
+            # memory_prompt_stack = torch.cat(projected_prompts, dim=0)  # shape: (10, 784, 896)
 
 
 
