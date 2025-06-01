@@ -1,7 +1,9 @@
 export OMP_NUM_THREADS=8
 export NCCL_IB_DISABLE=0
-export NCCL_IB_GID_INDEX=0
-export NCCL_SOCKET_IFNAME=ib0
+
+export NCCL_DEBUG=DEBUG
+export USE_PYTORCH_KERNEL_CACHE=0
+
 # export NCCL_DEBUG=INFO   # Uncomment for debugging
 export NCCL_DEBUG_SUBSYS=ALL
 export NCCL_TIMEOUT=3600  # 1 hour
@@ -9,7 +11,7 @@ export NCCL_TIMEOUT=3600  # 1 hour
 
 # The next line is very important! Solves the WatchDog TimeOut Issue
 export NCCL_P2P_DISABLE=1
-
+export CUTLASS_PATH=/hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/cutlass
 export WANDB_API_KEY="638aa591e9881cd840eb171df3f625bcd7613d14"
 
 LLM_VERSION="Qwen/Qwen2-0.5B-Instruct"
@@ -26,9 +28,10 @@ echo "BASE_RUN_NAME: ${BASE_RUN_NAME}"
 
 # Stage 2
 PROMPT_VERSION="qwen_1_5"
-RUN_NAME="llava-onevision-0.5b-qwen2_KIT_position_8tokens_lowerLR_1-2m"
+RUN_NAME="llava-onevision-0.5b-qwen2_KIT_position_8tokens_adapter_test_debug"
 # PREV_STAGE_CHECKPOINT="/hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/checkpoints/llava-onevision-qwen2-0.5b-ov" # replace it with your last checkpoint training from single image collection
-PREV_STAGE_CHECKPOINT="/hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/checkpoints/llava-onevision-0.5b-qwen2_KIT_position_8tokens_lowerLR_30-60"
+PREV_STAGE_CHECKPOINT="lmms-lab/llava-onevision-qwen2-0.5b-ov"
+
 echo "PREV_STAGE_CHECKPOINT: ${PREV_STAGE_CHECKPOINT}"
 echo "MID_RUN_NAME: ${RUN_NAME}"
 
@@ -50,9 +53,9 @@ srun --mpi=pmix --export=ALL,ACCELERATE_CPU_AFFINITY=0 \
     --deepspeed scripts/zero2.json \
     --model_name_or_path $PREV_STAGE_CHECKPOINT \
     --version $PROMPT_VERSION \
-    --data_path /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/LLaVA-NeXT/scripts/train/single_image.yaml \
-    --image_folder /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/llava-video/videos \
-    --video_folder /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/llava-video/videos \
+    --data_path /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/LLaVA-NeXT/scripts/train/long_train.yaml \
+    --image_folder /hkfs/work/workspace/scratch/tum_tyz7686-hf_storage/videos \
+    --video_folder /hkfs/work/workspace/scratch/tum_tyz7686-hf_storage/videos \
     --mm_tunable_parts="larimar_model,recurrent_model" \
     --mm_vision_tower_lr=2e-6 \
     --vision_tower ${VISION_MODEL_VERSION} \
@@ -74,19 +77,20 @@ srun --mpi=pmix --export=ALL,ACCELERATE_CPU_AFFINITY=0 \
     --gradient_accumulation_steps 4 \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
-    --save_steps 200 \
+    --save_steps 100 \
     --save_total_limit 3 \
-    --learning_rate 2e-6 \
-    --memory_transformer_lr 5e-5 \
-    --memory_key_value_lr 5e-5 \
+    --learning_rate 3e-4 \
+    --memory_transformer_lr 3e-4 \
+    --memory_key_value_lr 3e-4 \
     --weight_decay 0. \
     --warmup_ratio 0.03 \
     --lr_scheduler_type "cosine" \
     --logging_steps 1 \
     --tf32 True \
     --model_max_length 32768 \
-    --gradient_checkpointing False \
+    --gradient_checkpointing True \
     --dataloader_num_workers 2 \
+    --dataloader_pin_memory True \
     --lazy_preprocess True \
     --report_to wandb \
     --torch_compile True \
@@ -96,5 +100,3 @@ srun --mpi=pmix --export=ALL,ACCELERATE_CPU_AFFINITY=0 \
     --frames_upbound 250 \
     --attn_implementation "flash_attention_2"
 exit 0;
-
-# You can delete the sdpa attn_implementation if you want to use flash attn
