@@ -68,7 +68,7 @@ srun --mpi=pmix --export=ALL,ACCELERATE_CPU_AFFINITY=0 \
     --image_grid_pinpoints  "(1x1),...,(6x6)" \
     --mm_patch_merge_type spatial_unpad \
     --mm_newline_position one_token \
-    --bf16 True \
+    --bf16 False \
     --run_name $RUN_NAME \
     --output_dir /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/checkpoints/$RUN_NAME \
     --num_train_epochs 1 \
@@ -90,7 +90,6 @@ srun --mpi=pmix --export=ALL,ACCELERATE_CPU_AFFINITY=0 \
     --model_max_length 32768 \
     --gradient_checkpointing True \
     --dataloader_num_workers 2 \
-    --dataloader_pin_memory True \
     --lazy_preprocess True \
     --report_to wandb \
     --torch_compile True \

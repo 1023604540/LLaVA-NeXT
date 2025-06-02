@@ -97,7 +97,7 @@ srun --mpi=pmix --export=ALL,ACCELERATE_CPU_AFFINITY=0 \
     --torch_compile_backend "inductor" \
     --dataloader_drop_last True \
     --force_sample False \
-    --frames_upbound 250 \
+    --frames_upbound 300 \
     --attn_implementation "flash_attention_2"
 exit 0;
 
