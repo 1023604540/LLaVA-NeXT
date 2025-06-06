@@ -55,7 +55,7 @@ srun --mpi=pmix --export=ALL,ACCELERATE_CPU_AFFINITY=0 \
     --version $PROMPT_VERSION \
     --data_path /hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/LLaVA-NeXT/scripts/train/long_train.yaml \
     --image_folder /hkfs/work/workspace/scratch/tum_tyz7686-hf_storage/videos \
-    --video_folder /hkfs/work/workspace/scratch/tum_tyz7686-hf_storage/videos \
+    --video_folder /hkfs/work/workspace/scratch/tum_tyz7686-hf_storage/videos_tensors \
     --mm_tunable_parts="larimar_model,recurrent_model" \
     --mm_vision_tower_lr=2e-6 \
     --vision_tower ${VISION_MODEL_VERSION} \
