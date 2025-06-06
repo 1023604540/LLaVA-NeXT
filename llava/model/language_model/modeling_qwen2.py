@@ -338,13 +338,10 @@ class Qwen2Attention(nn.Module):
 
             # Apply rotary embeddings to memory keys using the same function
             # We pass None for query since we only need to rotate keys
-            _, mem_k = apply_rotary_pos_emb(
-                None,
-                mem_k,
-                mem_cos,
-                mem_sin,
-                mem_position_ids
-            )
+            mem_k_cos = mem_cos[mem_position_ids].unsqueeze(1)
+            mem_k_sin = mem_sin[mem_position_ids].unsqueeze(1)
+            mem_k = (mem_k * mem_k_cos) + (rotate_half(mem_k) * mem_k_sin)
+
             # Repeat to match heads
             mem_k = repeat_kv(mem_k, self.num_key_value_groups)
             mem_v = repeat_kv(mem_v, self.num_key_value_groups)
