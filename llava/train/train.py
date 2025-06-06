@@ -1176,15 +1176,18 @@ class LazySupervisedDataset(Dataset):
         elif "video" in sources[0]:
             video_file = self.list_data_dict[i]["video"]
             video_folder = self.data_args.video_folder
-            video_file = os.path.join(video_folder, video_file)
+            # video_file = os.path.join(video_folder, video_file)
+            video_file = os.path.join(video_folder, video_file + ".pt")
             suffix = video_file.split(".")[-1]
+
             if not os.path.exists(video_file):
                 print("File {} not exist!".format(video_file))
             rank0_print(f"Processing video file: {video_file}")
 
             try:
                 if "shareVideoGPTV" in video_file:
-                    frame_files = [os.path.join(video_file, f) for f in os.listdir(video_file) if os.path.isfile(os.path.join(video_file, f))]
+                    frame_files = [os.path.join(video_file, f) for f in os.listdir(video_file) if
+                                   os.path.isfile(os.path.join(video_file, f))]
                     frame_files.sort()  # Ensure the frames are sorted if they are named sequentially
 
                     # TODO: Hard CODE: Determine the indices for uniformly sampling 10 frames
@@ -1200,8 +1203,7 @@ class LazySupervisedDataset(Dataset):
                         num_frames_to_sample = total_frames
                     sampled_indices = np.linspace(0, total_frames - 1, num_frames_to_sample, dtype=int)
 
-
-                    frame_time = [i/2 for i in sampled_indices]
+                    frame_time = [i / 2 for i in sampled_indices]
                     frame_time = ",".join([f"{i:.2f}s" for i in frame_time])
 
                     video_time = total_frames / avg_fps
@@ -1217,7 +1219,9 @@ class LazySupervisedDataset(Dataset):
                         except IOError:
                             print(f"Failed to read frame at path: {frame_path}")
                 else:
-                    video, video_time, frame_time, num_frames_to_sample = process_video_with_decord(video_file, self.data_args)
+                    # video, video_time, frame_time, num_frames_to_sample = process_video_with_decord(video_file, self.data_args)
+                    # video = [Image.fromarray(np.random.randint(0, 255, (384, 384, 3), dtype=np.uint8)) for _ in range(300)]
+                    video = torch.load(video_file)
 
 
                 processor = self.data_args.image_processor
