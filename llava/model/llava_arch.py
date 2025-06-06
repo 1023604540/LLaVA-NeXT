@@ -523,7 +523,8 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 # memory_augmented_features.append(original_frames.detach())
                 memory_augmented_features.append(original_frames)
                 if recurrent_memory is not None:
-                    self.get_model().memory_readout_cache = recurrent_memory
+                    # self.get_model().memory_readout_cache = recurrent_memory
+                    self.get_model().memory_readout_cache = torch.randn_like(recurrent_memory)
 
             projected_prompts = []
 
