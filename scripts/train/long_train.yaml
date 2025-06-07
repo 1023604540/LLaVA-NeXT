@@ -19,6 +19,10 @@ datasets:
 #    sampling_strategy: "end:80%"
   - json_path: /hkfs/work/workspace/scratch/tum_tyz7686-hf_storage/metadata/1_2_m_nextqa_oe_qa_processed.json # will be released in next version of LLaVA-NeXT-Video
     sampling_strategy: "first:50%"
+  - json_path: /hkfs/work/workspace/scratch/tum_tyz7686-hf_storage/metadata/1_2_m_youtube_oe_v0_1_qa_processed.json # will be released in next version of LLaVA-NeXT-Video
+    sampling_strategy: "first:50%"
+  - json_path: /hkfs/work/workspace/scratch/tum_tyz7686-hf_storage/metadata/1_2_m_youtube_v0_1_cap_processed.json # will be released in next version of LLaVA-NeXT-Video
+    sampling_strategy: "first:50%"
 #  - json_path: //hkfs/work/workspace/scratch/tum_tyz7686-hf_storage/metadata/1_2_m_nextqa_mc_qa_processed.json # will be released in next version of LLaVA-NeXT-Video
 #    sampling_strategy: "all"
   - json_path: /hkfs/work/workspace/scratch/tum_tyz7686-hf_storage/metadata/1_2_m_activitynetqa_oe_qa_processed.json # will be released in next version of LLaVA-NeXT-Video
