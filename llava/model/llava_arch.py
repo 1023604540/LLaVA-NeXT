@@ -467,7 +467,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 # Init recurrent memory module
                 # rank_print(f"image shape : {image.shape}")
                 boundaries = uniform_segment(image, d=32)
-                rank_print(f"boundaries : {boundaries}")
+                rank0_print(f"boundaries : {boundaries}")
                 recurrent_model = self.get_model().recurrent_memory_transformer.to(self.device)
                 # Clear the memory cache to avoid memory leak across videos
                 updated_image_segment = None
