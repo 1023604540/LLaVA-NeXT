@@ -480,16 +480,7 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
                 image_segments = [image[boundaries[i]:boundaries[i + 1]] for i in range(len(boundaries) - 1)]
 
                 num_frames = image.shape[0]
-                initial_samples = min(8, num_frames)  # can't sample more than you have!
 
-                # Get linearly spaced float indices, then round to nearest int
-                initial_frames_idx = torch.linspace(0, num_frames - 1, steps=initial_samples)
-                initial_frames_idx = torch.round(initial_frames_idx).long()
-
-                # Clamp just to be 100% safe
-                initial_frames_idx = torch.clamp(initial_frames_idx, 0, num_frames - 1)
-                image_initial_memory = image[initial_frames_idx]
-                recurrent_model.memory_cache.append(image_initial_memory)
                 for image_segment in image_segments:
                     # rank_print(f"Image segment shape : {image_segment.shape}")
                     # rank0_print(torch.cuda.memory_allocated() / 1024 ** 3, "GB allocated")
@@ -522,9 +513,10 @@ class LlavaMetaForCausalLM(MultimodalOpsMixin, ABC):
 
                 # memory_augmented_features.append(original_frames.detach())
                 memory_augmented_features.append(original_frames)
-                if recurrent_memory is not None:
-                    # self.get_model().memory_readout_cache = recurrent_memory
-                    self.get_model().memory_readout_cache = torch.randn_like(recurrent_memory)
+                if recurrent_model.memory_cache is not None:
+                    self.get_model().memory_readout_cache = torch.cat(recurrent_model.memory_cache, dim=0)
+                    print(f"memory_readout_cache shape : {self.get_model().memory_readout_cache.shape}")
+
 
             projected_prompts = []
 
