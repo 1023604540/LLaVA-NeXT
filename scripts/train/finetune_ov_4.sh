@@ -29,7 +29,7 @@ echo "BASE_RUN_NAME: ${BASE_RUN_NAME}"
 
 # Stage 2
 PROMPT_VERSION="qwen_1_5"
-RUN_NAME="llava-onevision-0.5b-qwen2_KIT_recurrent_8tokens_catmemory_pe"
+RUN_NAME="llava-onevision-0.5b-qwen2_KIT_recurrent_8tokens_catmemory_pe_longtrain"
 PREV_STAGE_CHECKPOINT="lmms-lab/llava-onevision-qwen2-0.5b-ov" # replace it with your last checkpoint training from single image collection
 echo "PREV_STAGE_CHECKPOINT: ${PREV_STAGE_CHECKPOINT}"
 echo "MID_RUN_NAME: ${RUN_NAME}"
@@ -79,8 +79,8 @@ srun --mpi=pmix --export=ALL,ACCELERATE_CPU_AFFINITY=0 \
     --save_steps 200 \
     --save_total_limit 3 \
     --learning_rate 2e-6 \
-    --memory_transformer_lr 2e-5 \
-    --memory_key_value_lr 2e-5 \
+    --memory_transformer_lr 4e-5 \
+    --memory_key_value_lr 4e-5 \
     --weight_decay 0. \
     --warmup_ratio 0.03 \
     --lr_scheduler_type "cosine" \
