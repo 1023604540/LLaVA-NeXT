@@ -1177,7 +1177,10 @@ class LazySupervisedDataset(Dataset):
             video_file = self.list_data_dict[i]["video"]
             video_folder = self.data_args.video_folder
             # video_file = os.path.join(video_folder, video_file)
-            video_file = os.path.join(video_folder, video_file + ".pt")
+            if "tensor" in video_folder:
+                video_file = os.path.join(video_folder, video_file + ".pt")
+            else:
+                video_file = os.path.join(video_folder, video_file)
             suffix = video_file.split(".")[-1]
 
             if not os.path.exists(video_file):
@@ -1221,7 +1224,10 @@ class LazySupervisedDataset(Dataset):
                 else:
                     # video, video_time, frame_time, num_frames_to_sample = process_video_with_decord(video_file, self.data_args)
                     # video = [Image.fromarray(np.random.randint(0, 255, (384, 384, 3), dtype=np.uint8)) for _ in range(300)]
-                    video = torch.load(video_file)
+                    if "tensor" in video_folder:
+                        video = torch.load(video_file)
+                    else:
+                        video, video_time, frame_time, num_frames_to_sample = process_video_with_decord(video_file, self.data_args)
 
                 processor = self.data_args.image_processor
                 image = processor.preprocess(video, return_tensors="pt")["pixel_values"]
