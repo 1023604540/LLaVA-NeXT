@@ -140,8 +140,8 @@ class MemoryModule(nn.Module):
             memory = memory_2d.view(1, N, P, D).squeeze(0)
 
         self.memory_cache.append(memory)
-        if len(self.memory_cache) > 10:
-            self.memory_cache[0] = self.memory_cache[0].detach()
-            self.memory_cache = self.memory_cache[-10:]
+        MAX_BACKPROP_STEPS = 10
+        if len(self.memory_cache) > MAX_BACKPROP_STEPS:
+            self.memory_cache = self.memory_cache[-MAX_BACKPROP_STEPS:]
 
         return self.memory_cache

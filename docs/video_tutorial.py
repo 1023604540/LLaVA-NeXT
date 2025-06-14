@@ -25,7 +25,7 @@ print("load model")
 warnings.filterwarnings("ignore")
 # Load the OneVision model
 # pretrained = "/anvme/workspace/b232dd16-LLaVA-OV/checkpoints/0.5b_FAU_llava_onevision_qwen2_8tokens_initial_2ndHalf_2ndEpoch"
-pretrained = "lmms-lab/llava-onevision-qwen2-0.5b-ov"   # Use this for 7B model
+pretrained = "lmms-lab/llava-onevision-qwen2-7b-ov"   # Use this for 7B model
 # pretrained = "/anvme/workspace/b232dd16-LLaVA-OV/llava-onevision-qwen2-0.5b-ov"   # Use this for 7B model
 # pretrained = "/hkfs/work/workspace/scratch/tum_tyz7686-LLaVA-OV/checkpoints/llava-onevision-qwen2-0.5b-ov"   # Use this for 7B model
 model_name = "llava_qwen"
