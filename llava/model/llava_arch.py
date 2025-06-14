@@ -33,7 +33,7 @@ from llava.model.memory_module.memory_builder import NeuralTuringMachine, Multim
 from llava.model.memory_module.segment import segment, adjusted_segment, uniform_segment
 import heapq
 import numpy as np
-from llava.model.memory_module.MemoryController import MemoryModule
+from llava.model.memory_module.MemoryController import MemoryModule, Config
 from llava.model.memory_module.bigru import TemporalGRUEncoder
 from llava.model.memory_module.position_encoding import TemporalPositionalEncoding
 import time
@@ -115,7 +115,19 @@ class LlavaMetaModel:
         LLM_hidden_dim = getattr(config, "llm_hidden_dim", 896)
 
         # Define recurrent memory transformer
-        self.recurrent_memory_transformer = MemoryModule().to(self.device)
+        custom_config = Config()
+        custom_config.mm_hidden_size = LLM_hidden_dim
+        custom_config.mm_hidden_act = "relu"
+        custom_config.mm_num_attention_heads = 8
+        custom_config.patch_size = 196
+        custom_config.mm_attention_probs_dropout_prob = 0.1
+        custom_config.mm_layer_norm_eps = 1e-12
+        custom_config.mm_hidden_dropout_prob = 0.1
+        custom_config.mm_intermediate_size = 4 * custom_config.mm_hidden_size
+        custom_config.num_memory_tokens = 8
+        custom_config.depth = 1
+        custom_config.mm_dtype = torch.float16
+        self.recurrent_memory_transformer = MemoryModule(custom_config).to(self.device)
         self.memory_fuser = nn.Linear(
             in_features=LLM_hidden_dim,
             out_features=LLM_hidden_dim,
@@ -127,7 +139,7 @@ class LlavaMetaModel:
             embed_dim=LLM_hidden_dim,
             learnable=False
         ).to(self.device)
-        self.token_type_embedding = nn.Embedding(2, 896).to(self.device)
+        self.token_type_embedding = nn.Embedding(2, LLM_hidden_dim).to(self.device)
         # self.gru_encoder = TemporalGRUEncoder().to(self.device)
     def get_vision_tower(self):
         vision_tower = getattr(self, "vision_tower", None)
