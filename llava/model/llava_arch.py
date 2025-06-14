@@ -112,7 +112,8 @@ class LlavaMetaModel:
             if "unpad" in getattr(config, "mm_patch_merge_type", ""):
                 self.image_newline = nn.Parameter(torch.empty(config.hidden_size, dtype=self.dtype))
 
-        LLM_hidden_dim = getattr(config, "llm_hidden_dim", 896)
+        LLM_hidden_dim = getattr(config, "hidden_size", 896)
+        print(f"LLM hidden dim: {LLM_hidden_dim}")
 
         # Define recurrent memory transformer
         custom_config = Config()
